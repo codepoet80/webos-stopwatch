@@ -1,0 +1,7 @@
+[
+    {"source": "app/assistants/stage-assistant.js"},
+    {
+        "scenes": "watchView",
+        "source": "app/assistants/watchView-assistant.js"
+    }
+]

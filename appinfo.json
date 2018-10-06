@@ -1,0 +1,9 @@
+{
+	"id": "com.jonandnic.webos.stopwatch",
+	"version": "0.0.2",
+	"vendor": "Jonathan Wise",
+	"type": "web",
+	"main": "index.html",
+	"title": "Stopwatch",
+	"icon": "icon.png"
+}

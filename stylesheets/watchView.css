@@ -1,0 +1,11 @@
+.dark-background{
+    background-color: #393e43;
+}
+.watchFace {
+    height: 80vh;
+    margin-top: 84px;
+    margin-bottom: 54px;
+    font-family: Helvetica;
+    font-size: 72px;
+    text-align: center;
+}
