@@ -200,9 +200,9 @@ WatchViewAssistant.prototype.setup = function() {
 			{},
 			{
 				items: [
-					{iconPath: 'images/count-down.png', command:'back'},
-					{iconPath: 'images/count-up.png', command:'fwd'}
-				],
+					{iconPath: 'images/count-up.png', command:'countUp'},
+					{iconPath: 'images/count-down.png', command:'countDown'}
+				],toggleCmd:'countUp', 
 			},
 			{}
 		]
