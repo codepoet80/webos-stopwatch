@@ -5,58 +5,131 @@ function WatchViewAssistant() {
 	   that needs the scene controller should be done in the setup function below. */
 }
 
+var running=false;
+var sceneTitle="Stopwatch";
+var timerStartValue=0;	//Value to start the timer at (non-0 for debugging)
+var stopWatchTimerValue=0;	//Init the timer (will be set later)
+var stopWatchTimerInterval;
+var lapCount = 0;
+var firstLap = "";
+var lapDivEmptyHTML = "<table class='watchLap'><tr><td>&nbsp;</td></tr></table>";
+
+Number.prototype.toLongTimeValue = function() {
+	
+	//Calculate time segments
+	var milliseconds = this * 100;
+	var seconds = Math.floor(milliseconds/1000);
+	var minutes = Math.floor(milliseconds/60000);
+	
+	//Format milliseconds into a single digit
+	milliseconds = milliseconds - (seconds * 1000);
+	milliseconds = milliseconds.toString().substr(0, 1);
+
+	//Format seconds into exactly 2 digits
+	if (seconds > 59)
+		seconds = seconds - (minutes * 60)
+	if (seconds < 10)
+		seconds = "0" + seconds;
+
+	//Format minutes into exactly 2 digits
+	if (minutes < 0)
+		minutes = "00";
+	else if (minutes < 10)
+		minutes = "0" + minutes;
+
+	//Return formatted string
+	return minutes + ":" + seconds + "." + milliseconds;
+}
+
 WatchViewAssistant.prototype.btnStopHandler = function()
 {
 	Mojo.Log.info("The Stop button was pressed");
-	this.controller.get("watchViewDetail").innerHTML = "Stop";
+	//Stop Timer
+	running = false;
+	clearInterval(stopWatchTimerInterval);
+
+	//Update UI
+	this.SetWidgetLabel("btnLapReset", "Reset");
 	this.SetWidgetDisablement("btnStart", false);
-	this.SetWidgetDisablement("btnLap", true);
+	this.SetWidgetDisablement("btnLapReset", false);
 	this.SetWidgetDisablement("btnStop", true);
 }
 
-WatchViewAssistant.prototype.btnLapHandler = function()
+WatchViewAssistant.prototype.btnLapResetResetHandler = function()
 {
-	Mojo.Log.info("The Lap button was pressed");
-	this.controller.get("watchViewDetail").innerHTML = "Do a lap";
-
+	if (running)
+	{
+		Mojo.Log.info("The Lap button was pressed");
+		var showLap = lapCount+1;
+		var newLap = "<table class='watchLap'><tr><td class='leftLap'>Lap " + showLap + "</td><td class='rightLap'>" + this.controller.get("watchViewDetail").innerHTML + "</td></tr></table>";
+		if (lapCount == 0)
+		{
+			firstLap = newLap;
+			this.controller.get("watchLapTimes").innerHTML = firstLap + lapDivEmptyHTML;
+		}
+		else if (lapCount == 1)
+		{
+			this.controller.get("watchLapTimes").innerHTML = newLap + firstLap;
+		}
+		else
+		{
+			this.controller.get("watchLapTimes").innerHTML = newLap + this.controller.get("watchLapTimes").innerHTML;
+		}		
+		
+		//Add a lap
+		this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValue();
+		stopWatchTimerValue=timerStartValue;
+		lapCount++;
+	}
+	else
+	{
+		Mojo.Log.info("The Reset button was pressed");
+		lapCount = 0;
+		stopWatchTimerValue=timerStartValue;
+		this.SetWidgetDisablement("btnLapReset", true);
+		//Reset the timer
+		this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValue();
+		this.controller.get("watchLapTimes").innerHTML = lapDivEmptyHTML + lapDivEmptyHTML;
+	}
 }
 
 WatchViewAssistant.prototype.btnStartHandler = function()
 {
 	Mojo.Log.info("The Start button was pressed");
-	this.controller.get("watchViewDetail").innerHTML = "Start";
+	//Start Timer
+	running = true;
+	stopWatchTimerInterval = setInterval(this.incrementTimer, 100);
+
+	//Update UI
+	this.SetWidgetLabel("btnLapReset", "Lap");
 	this.SetWidgetDisablement("btnStart", true);
-	this.SetWidgetDisablement("btnLap", false);
+	this.SetWidgetDisablement("btnLapReset", false);
 	this.SetWidgetDisablement("btnStop", false);
 }
 
-WatchViewAssistant.prototype.SetWidgetDisablement = function(widgetName, newvalue)
+WatchViewAssistant.prototype.incrementTimer = function()
 {
-	var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
-	thisWidgetModel.disabled = newvalue;
-	this.controller.setWidgetModel(widgetName, thisWidgetModel);
-	//This might not be necessary. Nothing seems to care, but this site said to do it: https://semisignal.com/changing-the-model-of-activity-buttons-on-webos/
-	//	this.controller.modelChanged(this.controller.get(widgetName));
+	stopWatchTimerValue++;
+	document.getElementById("watchViewDetail").innerHTML = stopWatchTimerValue.toLongTimeValue();
 }
 
 WatchViewAssistant.prototype.setup = function() {
 	Mojo.Log.info("Scene started!"); 
 	/* this function is for setup tasks that have to happen when the scene is first created */
-		
+	stopWatchTimerValue = timerStartValue;
+
 	/* use Mojo.View.render to render view templates and add them to the scene, if needed */
 	
 	/* setup widgets here */
-	var watchViewTitleElement = this.controller.get("watchViewTitle");
-	watchViewTitleElement.innerHTML = "Stopwatch";
-
-	var watchViewDetailElement = this.controller.get("watchViewDetail");
-	watchViewDetailElement.innerHTML = "00:00.00";
+	this.controller.get("watchViewTitle").innerHTML = sceneTitle;
+	this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValue();
+	this.controller.get("watchLapTimes").innerHTML = lapDivEmptyHTML + lapDivEmptyHTML;
 
 	this.controller.setupWidget('btnStop', this.attributes={}, this.model={label:"Stop", buttonClass: 'palm-button negative disabled buttonfloat', disabled: true});
 	this.btnStopHandler = this.btnStopHandler.bind(this);
 
-	this.controller.setupWidget('btnLap', this.attributes={}, this.model={label:"Lap", buttonClass: 'palm-button buttonfloat', disabled: true});
-	this.btnLapHandler = this.btnLapHandler.bind(this);
+	this.controller.setupWidget('btnLapReset', this.attributes={}, this.model={label:"Reset", buttonClass: 'palm-button buttonfloat', disabled: true});
+	this.btnLapResetResetHandler = this.btnLapResetResetHandler.bind(this);
 
 	this.controller.setupWidget('btnStart', this.attributes={}, this.model={label:"Start", buttonClass: 'palm-button affirmative buttonfloat', disabled: false});
 	this.btnStartHandler = this.btnStartHandler.bind(this);
@@ -69,7 +142,7 @@ WatchViewAssistant.prototype.activate = function(event) {
 	/* put in event handlers here that should only be in effect when this scene is active. For
 	   example, key handlers that are observing the document */
 	Mojo.Event.listen(this.controller.get('btnStop'), Mojo.Event.tap, this.btnStopHandler);
-	Mojo.Event.listen(this.controller.get('btnLap'), Mojo.Event.tap, this.btnLapHandler);
+	Mojo.Event.listen(this.controller.get('btnLapReset'), Mojo.Event.tap, this.btnLapResetResetHandler);
 	Mojo.Event.listen(this.controller.get('btnStart'), Mojo.Event.tap, this.btnStartHandler);
 };
 
@@ -77,7 +150,7 @@ WatchViewAssistant.prototype.deactivate = function(event) {
 	/* remove any event handlers you added in activate and do any other cleanup that should happen before
 	   this scene is popped or another scene is pushed on top */
 	Mojo.Event.stopListening(this.controller.get('btnStop'),Mojo.Event.tap, this.btnStopHandler)
-	Mojo.Event.stopListening(this.controller.get('btnLap'),Mojo.Event.tap, this.btnLapHandler)
+	Mojo.Event.stopListening(this.controller.get('btnLapReset'),Mojo.Event.tap, this.btnLapResetResetHandler)
 	Mojo.Event.stopListening(this.controller.get('btnStart'),Mojo.Event.tap, this.btnStartHandler)
 };
 
@@ -85,3 +158,20 @@ WatchViewAssistant.prototype.cleanup = function(event) {
 	/* this function should do any cleanup needed before the scene is destroyed as 
 	   a result of being popped off the scene stack */
 };
+
+//UI Helpers
+WatchViewAssistant.prototype.SetWidgetDisablement = function(widgetName, newvalue)
+{
+	var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
+	thisWidgetModel.disabled = newvalue;
+	this.controller.setWidgetModel(widgetName, thisWidgetModel);
+	//This might not be necessary. Nothing seems to care, but this site said to do it: https://semisignal.com/changing-the-model-of-activity-buttons-on-webos/
+	//	this.controller.modelChanged(this.controller.get(widgetName));
+}
+
+WatchViewAssistant.prototype.SetWidgetLabel = function(widgetName, newvalue)
+{
+	var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
+	thisWidgetModel.label = newvalue;
+	this.controller.setWidgetModel(widgetName, thisWidgetModel);
+}
