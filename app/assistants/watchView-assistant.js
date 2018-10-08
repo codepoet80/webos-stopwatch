@@ -187,6 +187,28 @@ WatchViewAssistant.prototype.setup = function() {
 	this.controller.setupWidget('btnStart', this.attributes={}, this.model={label:"Start", buttonClass: 'palm-button affirmative buttonfloat', disabled: false});
 	this.btnStartHandler = this.btnStartHandler.bind(this);
 
+	//App Menu (handled in stage controller: stage-assistant.js)
+	this.controller.setupWidget(Mojo.Menu.appMenu, {}, Mojo.Controller.stageController.appMenuModel);
+
+	//Command Menu (buttons on the bottom)
+	this.cmdMenuAttributes = {
+		menuClass: 'watch-command-menu'
+	}
+	this.cmdMenuModel = {
+		visible: true,
+		items: [
+			{},
+			{
+				items: [
+					{iconPath: 'images/count-down.png', command:'back'},
+					{iconPath: 'images/count-up.png', command:'fwd'}
+				],
+			},
+			{}
+		]
+	  };
+	  this.controller.setupWidget(Mojo.Menu.commandMenu, this.cmdMenuAttributes, this.cmdMenuModel);
+
 	/* add event handlers to listen to events from widgets */
 	Mojo.Log.info("Scene setup done."); 
 };
