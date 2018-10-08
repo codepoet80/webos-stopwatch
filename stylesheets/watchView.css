@@ -1,5 +1,6 @@
 body{
     font-size:100%;
+    color: white;
 }
 .watchFace {
     height: 80vh;
@@ -36,4 +37,13 @@ body{
     text-align: right;
     font-family: "Lucida Console", Monaco, monospace;
     margin-right: 18px;
+}
+.rightLap.default {
+    color: white;
+}
+.rightLap.high {
+    color: red;
+}
+.rightLap.low {
+    color: green;
 }
