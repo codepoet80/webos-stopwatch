@@ -45,6 +45,8 @@ Number.prototype.toLongTimeValue = function() {
 
 WatchViewAssistant.prototype.btnStopHandler = function()
 {
+	//TODO: This is wonky if you stop and start without resetting
+	
 	Mojo.Log.info("The Stop button was pressed.");
 	//Stop Timer
 	running = false;
@@ -206,8 +208,8 @@ WatchViewAssistant.prototype.setup = function() {
 			},
 			{}
 		]
-	  };
-	  this.controller.setupWidget(Mojo.Menu.commandMenu, this.cmdMenuAttributes, this.cmdMenuModel);
+	};
+	this.controller.setupWidget(Mojo.Menu.commandMenu, this.cmdMenuAttributes, this.cmdMenuModel);
 
 	/* add event handlers to listen to events from widgets */
 	Mojo.Log.info("Scene setup done."); 
