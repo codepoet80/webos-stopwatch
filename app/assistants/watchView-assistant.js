@@ -11,9 +11,6 @@ var timerStartValue=0;	//Value to start the timer at (non-0 for debugging)
 var stopWatchTimerValue=0;	//Init the timer (will be set later)
 var stopWatchTimerInterval;
 var lapCount = 0;
-var firstLap = "";
-var lowestLapTime = 0;
-var highestLapTime = 0;
 var lapDivEmptyHTML = "<table class='watchLap'><tr><td>&nbsp;</td></tr></table>";
 
 Number.prototype.toLongTimeValue = function() {
@@ -52,9 +49,9 @@ WatchViewAssistant.prototype.btnStopHandler = function()
 	running = false;
 	clearInterval(stopWatchTimerInterval);
 
-	//Update watch face one last time
+	//Update watch face
 	document.getElementById("watchViewDetail").innerHTML = stopWatchTimerValue.toLongTimeValue();
-	this.addLapToList(lapCount+1);
+	this.addLapToList(lapCount+1, stopWatchTimerValue);
 
 	//Update UI
 	this.SetWidgetLabel("btnLapReset", "Reset");
@@ -63,12 +60,12 @@ WatchViewAssistant.prototype.btnStopHandler = function()
 	this.SetWidgetDisablement("btnStop", true);
 }
 
-WatchViewAssistant.prototype.btnLapResetResetHandler = function()
+WatchViewAssistant.prototype.btnLapResetHandler = function()
 {
 	if (running)
 	{
 		Mojo.Log.info("The Lap button was pressed.");
-		this.addLapToList(lapCount+1);
+		this.addLapToList(lapCount+1, stopWatchTimerValue);
 		
 		//Increment laps
 		this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValue();
@@ -81,66 +78,87 @@ WatchViewAssistant.prototype.btnLapResetResetHandler = function()
 		
 		//Reset global variables
 		lapCount = 0;
-		lowestLapTime = 0;
-		highestLapTime = 0;
 		stopWatchTimerValue=timerStartValue;
 		this.SetWidgetDisablement("btnLapReset", true);
 
 		//Reset the timer
 		this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValue();
-		this.controller.get("watchLapTimes").innerHTML = lapDivEmptyHTML + lapDivEmptyHTML;
+		this.controller.get("watchLapTimes").innerHTML = "";
+		this.controller.get("watchLapPlaceholder").innerHTML = lapDivEmptyHTML + lapDivEmptyHTML
 	}
 }
 
-WatchViewAssistant.prototype.addLapToList = function(showLap) {
-	var newLap = "<table class='watchLap'><tr><td class='leftLap'>Lap " + 
-		 showLap + "</td><td class='rightLap' title='" + stopWatchTimerValue.toString() + "'>" + 
-		 stopWatchTimerValue.toLongTimeValue() + "</td></tr></table>";
-	if (showLap == 1)
-	{
-		firstLap = newLap;
-		this.controller.get("watchLapTimes").innerHTML = firstLap + lapDivEmptyHTML;
+WatchViewAssistant.prototype.addLapToList = function(showLap, timerValue) {
+
+	var rowTables = document.getElementById("watchLapTimes").children;
+	var rowExists = false;
+	//Check if this row exists and needs to be updated
+	for (var i = 0; i < rowTables.length; i++) {
+		var currTableId = rowTables[i].id;
+		if (currTableId == "Lap" + showLap)
+		{
+			rowExists = true;
+			Mojo.Log.info("Updating existing lap row " + showLap + " with time " + timerValue);
+			var countColumn = rowTables[i].getElementsByClassName("rightLap");
+			for (var j=0; j < countColumn.length; j++)
+			{
+				var currColumn = countColumn[j];
+				currColumn.title = timerValue.toString();
+				currColumn.innerHTML = timerValue.toLongTimeValue();
+			}
+		}
 	}
-	else if (showLap == 2)
+	//If the row doesn't exist, we need to create it -- slightly differently for the first 2 rows
+	if (!rowExists)
 	{
-		this.controller.get("watchLapTimes").innerHTML = newLap + firstLap;
-	}
-	else
-	{
+		Mojo.Log.info("Creating new lap row " + showLap + " with time " + timerValue);
+		var newLap = "<table class='watchLap' id='Lap" + showLap + "'><tr><td class='leftLap'>Lap " + 
+			showLap + "</td><td class='rightLap' title='" + timerValue.toString() + "'>" + 
+			timerValue.toLongTimeValue() + "</td></tr></table>";
 		this.controller.get("watchLapTimes").innerHTML = newLap + this.controller.get("watchLapTimes").innerHTML;
 	}
+	//Add placeholder rows if needed
+	if (showLap == 1)
+		this.controller.get("watchLapPlaceholder").innerHTML = lapDivEmptyHTML;
+	else
+		this.controller.get("watchLapPlaceholder").innerHTML = "";
 
 	//Update lap colors
-	this.updateBestWorstLaps(stopWatchTimerValue);
+	this.updateBestWorstLaps();
 }
 
-WatchViewAssistant.prototype.updateBestWorstLaps = function(newVal) {
+WatchViewAssistant.prototype.updateBestWorstLaps = function() {
 	
-	if (lowestLapTime == 0 || newVal < lowestLapTime)
-	{
-		Mojo.Log.info("new low: " + newVal);
-		lowestLapTime = newVal;
-	}
-	if (newVal > highestLapTime)
-	{
-		Mojo.Log.info("new high: " + newVal);
-		highestLapTime = newVal;
-	}
-
+	//Find lowest and highest laps
+	var highestLapTime = 0;
+	var lowestLapTime = 0;
 	var rowTables = document.getElementById("watchLapTimes").children;
 	for (var i = 0; i < rowTables.length; i++) {
 		var countColumn = rowTables[i].getElementsByClassName("rightLap");
 		for (var j=0; j < countColumn.length; j++)
 		{
 			var currColumn = countColumn[j];
+			var currLapTime = parseInt(currColumn.title);
+			if (lowestLapTime == 0 || currLapTime < lowestLapTime)
+				lowestLapTime = currLapTime;
+			if (currLapTime > highestLapTime)
+				highestLapTime = currLapTime;
+		}
+	}
+
+	//Compare all laps to lowest and highest
+	for (var i = 0; i < rowTables.length; i++) {
+		var countColumn = rowTables[i].getElementsByClassName("rightLap");
+		for (var j=0; j < countColumn.length; j++)
+		{
+			var currColumn = countColumn[j];
+			var currLapTime = parseInt(currColumn.title);
 			currColumn.className = "rightLap default";
-			var rowTime = parseInt(currColumn.title);
-			
-			if (rowTime == highestLapTime)
+			if (currLapTime >= highestLapTime)
 			{
 				currColumn.className = "rightLap high";
 			}
-			if (rowTime == lowestLapTime)
+			if (currLapTime <= lowestLapTime)
 			{
 				currColumn.className = "rightLap low";
 			}
@@ -178,13 +196,14 @@ WatchViewAssistant.prototype.setup = function() {
 	/* setup widgets here */
 	this.controller.get("watchViewTitle").innerHTML = sceneTitle;
 	this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValue();
-	this.controller.get("watchLapTimes").innerHTML = lapDivEmptyHTML + lapDivEmptyHTML;
+	this.controller.get("watchLapTimes").innerHTML = "";
+	this.controller.get("watchLapPlaceholder").innerHTML = lapDivEmptyHTML + lapDivEmptyHTML;
 
 	this.controller.setupWidget('btnStop', this.attributes={}, this.model={label:"Stop", buttonClass: 'palm-button negative disabled buttonfloat', disabled: true});
 	this.btnStopHandler = this.btnStopHandler.bind(this);
 
 	this.controller.setupWidget('btnLapReset', this.attributes={}, this.model={label:"Reset", buttonClass: 'palm-button buttonfloat', disabled: true});
-	this.btnLapResetResetHandler = this.btnLapResetResetHandler.bind(this);
+	this.btnLapResetHandler = this.btnLapResetHandler.bind(this);
 
 	this.controller.setupWidget('btnStart', this.attributes={}, this.model={label:"Start", buttonClass: 'palm-button affirmative buttonfloat', disabled: false});
 	this.btnStartHandler = this.btnStartHandler.bind(this);
@@ -219,7 +238,7 @@ WatchViewAssistant.prototype.activate = function(event) {
 	/* put in event handlers here that should only be in effect when this scene is active. For
 	   example, key handlers that are observing the document */
 	Mojo.Event.listen(this.controller.get('btnStop'), Mojo.Event.tap, this.btnStopHandler);
-	Mojo.Event.listen(this.controller.get('btnLapReset'), Mojo.Event.tap, this.btnLapResetResetHandler);
+	Mojo.Event.listen(this.controller.get('btnLapReset'), Mojo.Event.tap, this.btnLapResetHandler);
 	Mojo.Event.listen(this.controller.get('btnStart'), Mojo.Event.tap, this.btnStartHandler);
 };
 
