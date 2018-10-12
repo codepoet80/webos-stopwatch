@@ -13,32 +13,7 @@ var stopWatchTimerInterval;
 var lapCount = 0;
 var lapDivEmptyHTML = "<table class='watchLap'><tr><td>&nbsp;</td></tr></table>";
 
-Number.prototype.toLongTimeValue = function() {
-	
-	//Calculate time segments
-	var milliseconds = this * 100;
-	var seconds = Math.floor(milliseconds/1000);
-	var minutes = Math.floor(milliseconds/60000);
-	
-	//Format milliseconds into a single digit
-	milliseconds = milliseconds - (seconds * 1000);
-	milliseconds = milliseconds.toString().substr(0, 1);
 
-	//Format seconds into exactly 2 digits
-	if (seconds > 59)
-		seconds = seconds - (minutes * 60)
-	if (seconds < 10)
-		seconds = "0" + seconds;
-
-	//Format minutes into exactly 2 digits
-	if (minutes < 0)
-		minutes = "00";
-	else if (minutes < 10)
-		minutes = "0" + minutes;
-
-	//Return formatted string
-	return minutes + ":" + seconds + "." + milliseconds;
-}
 
 StopwatchAssistant.prototype.btnStopHandler = function()
 {
@@ -255,7 +230,7 @@ StopwatchAssistant.prototype.cleanup = function(event) {
 	   a result of being popped off the scene stack */
 };
 
-//UI Helpers
+//Helper functions
 StopwatchAssistant.prototype.SetWidgetDisablement = function(widgetName, newvalue)
 {
 	var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
@@ -270,4 +245,31 @@ StopwatchAssistant.prototype.SetWidgetLabel = function(widgetName, newvalue)
 	var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
 	thisWidgetModel.label = newvalue;
 	this.controller.setWidgetModel(widgetName, thisWidgetModel);
+}
+
+Number.prototype.toLongTimeValue = function() {
+	
+	//Calculate time segments
+	var milliseconds = this * 100;
+	var seconds = Math.floor(milliseconds/1000);
+	var minutes = Math.floor(milliseconds/60000);
+	
+	//Format milliseconds into a single digit
+	milliseconds = milliseconds - (seconds * 1000);
+	milliseconds = milliseconds.toString().substr(0, 1);
+
+	//Format seconds into exactly 2 digits
+	if (seconds > 59)
+		seconds = seconds - (minutes * 60)
+	if (seconds < 10)
+		seconds = "0" + seconds;
+
+	//Format minutes into exactly 2 digits
+	if (minutes < 0)
+		minutes = "00";
+	else if (minutes < 10)
+		minutes = "0" + minutes;
+
+	//Return formatted string
+	return minutes + ":" + seconds + "." + milliseconds;
 }
