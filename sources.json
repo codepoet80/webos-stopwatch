@@ -1,7 +1,11 @@
 [
     {"source": "app/assistants/stage-assistant.js"},
     {
-        "scenes": "watchView",
-        "source": "app/assistants/watchView-assistant.js"
+        "scenes": "stopwatch",
+        "source": "app/assistants/stopwatch-assistant.js"
+    },
+    {
+        "scenes": "timer",
+        "source": "app/assistants/timer-assistant.js"
     }
 ]

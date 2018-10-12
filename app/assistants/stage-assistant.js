@@ -10,7 +10,7 @@ StageAssistant.prototype.setup = function() {
 		items: [{label: "About Stopwatch", command: 'do-myAbout'}]
 	};
 
-	this.controller.pushScene("watchView");
+	this.controller.pushScene("stopwatch");
 };
 
 StageAssistant.prototype.handleCommand = function(event) {

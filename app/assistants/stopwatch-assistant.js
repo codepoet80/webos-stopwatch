@@ -1,4 +1,4 @@
-function WatchViewAssistant() {
+function StopwatchAssistant() {
 	/* this is the creator function for your scene assistant object. It will be passed all the 
 	   additional parameters (after the scene name) that were passed to pushScene. The reference
 	   to the scene controller (this.controller) has not be established yet, so any initialization
@@ -40,7 +40,7 @@ Number.prototype.toLongTimeValue = function() {
 	return minutes + ":" + seconds + "." + milliseconds;
 }
 
-WatchViewAssistant.prototype.btnStopHandler = function()
+StopwatchAssistant.prototype.btnStopHandler = function()
 {
 	//TODO: This is wonky if you stop and start without resetting
 	
@@ -60,7 +60,7 @@ WatchViewAssistant.prototype.btnStopHandler = function()
 	this.SetWidgetDisablement("btnStop", true);
 }
 
-WatchViewAssistant.prototype.btnLapResetHandler = function()
+StopwatchAssistant.prototype.btnLapResetHandler = function()
 {
 	if (running)
 	{
@@ -88,7 +88,7 @@ WatchViewAssistant.prototype.btnLapResetHandler = function()
 	}
 }
 
-WatchViewAssistant.prototype.addLapToList = function(showLap, timerValue) {
+StopwatchAssistant.prototype.addLapToList = function(showLap, timerValue) {
 
 	var rowTables = document.getElementById("watchLapTimes").children;
 	var rowExists = false;
@@ -127,7 +127,7 @@ WatchViewAssistant.prototype.addLapToList = function(showLap, timerValue) {
 	this.updateBestWorstLaps();
 }
 
-WatchViewAssistant.prototype.updateBestWorstLaps = function() {
+StopwatchAssistant.prototype.updateBestWorstLaps = function() {
 	
 	//Find lowest and highest laps
 	var highestLapTime = 0;
@@ -166,7 +166,7 @@ WatchViewAssistant.prototype.updateBestWorstLaps = function() {
 	}
 }
 
-WatchViewAssistant.prototype.btnStartHandler = function()
+StopwatchAssistant.prototype.btnStartHandler = function()
 {
 	Mojo.Log.info("The Start button was pressed.");
 	//Start Timer
@@ -180,13 +180,13 @@ WatchViewAssistant.prototype.btnStartHandler = function()
 	this.SetWidgetDisablement("btnStop", false);
 }
 
-WatchViewAssistant.prototype.incrementTimer = function()
+StopwatchAssistant.prototype.incrementTimer = function()
 {
 	stopWatchTimerValue++;
 	document.getElementById("watchViewDetail").innerHTML = stopWatchTimerValue.toLongTimeValue();
 }
 
-WatchViewAssistant.prototype.setup = function() {
+StopwatchAssistant.prototype.setup = function() {
 	Mojo.Log.info("Scene started."); 
 	/* this function is for setup tasks that have to happen when the scene is first created */
 	stopWatchTimerValue = timerStartValue;
@@ -234,7 +234,7 @@ WatchViewAssistant.prototype.setup = function() {
 	Mojo.Log.info("Scene setup done."); 
 };
 
-WatchViewAssistant.prototype.activate = function(event) {
+StopwatchAssistant.prototype.activate = function(event) {
 	/* put in event handlers here that should only be in effect when this scene is active. For
 	   example, key handlers that are observing the document */
 	Mojo.Event.listen(this.controller.get('btnStop'), Mojo.Event.tap, this.btnStopHandler);
@@ -242,7 +242,7 @@ WatchViewAssistant.prototype.activate = function(event) {
 	Mojo.Event.listen(this.controller.get('btnStart'), Mojo.Event.tap, this.btnStartHandler);
 };
 
-WatchViewAssistant.prototype.deactivate = function(event) {
+StopwatchAssistant.prototype.deactivate = function(event) {
 	/* remove any event handlers you added in activate and do any other cleanup that should happen before
 	   this scene is popped or another scene is pushed on top */
 	Mojo.Event.stopListening(this.controller.get('btnStop'),Mojo.Event.tap, this.btnStopHandler)
@@ -250,13 +250,13 @@ WatchViewAssistant.prototype.deactivate = function(event) {
 	Mojo.Event.stopListening(this.controller.get('btnStart'),Mojo.Event.tap, this.btnStartHandler)
 };
 
-WatchViewAssistant.prototype.cleanup = function(event) {
+StopwatchAssistant.prototype.cleanup = function(event) {
 	/* this function should do any cleanup needed before the scene is destroyed as 
 	   a result of being popped off the scene stack */
 };
 
 //UI Helpers
-WatchViewAssistant.prototype.SetWidgetDisablement = function(widgetName, newvalue)
+StopwatchAssistant.prototype.SetWidgetDisablement = function(widgetName, newvalue)
 {
 	var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
 	thisWidgetModel.disabled = newvalue;
@@ -265,7 +265,7 @@ WatchViewAssistant.prototype.SetWidgetDisablement = function(widgetName, newvalu
 	//	this.controller.modelChanged(this.controller.get(widgetName));
 }
 
-WatchViewAssistant.prototype.SetWidgetLabel = function(widgetName, newvalue)
+StopwatchAssistant.prototype.SetWidgetLabel = function(widgetName, newvalue)
 {
 	var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
 	thisWidgetModel.label = newvalue;
