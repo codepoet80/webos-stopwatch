@@ -2,23 +2,28 @@ function StageAssistant() {
 	/* this is the creator function for your stage assistant object */
 }
 
+StageAssistant.prototype.currentSceneName = "";
+
 StageAssistant.prototype.setup = function() {
 
 	/* this function is for setup tasks that have to happen when the stage is first created */
 	StageController = Mojo.Controller.stageController;
+
+	//Setup App Menu
 	StageController.appMenuModel = {
 		items: [{label: "About Stopwatch", command: 'do-myAbout'}]
 	};
 
-	this.controller.pushScene("stopwatch");
+	this.currentSceneName = "stopwatch";
+	this.controller.pushScene(this.currentSceneName);
 };
 
 StageAssistant.prototype.handleCommand = function(event) {
 	this.controller=Mojo.Controller.stageController.activeScene();
+	StageController = Mojo.Controller.stageController;
   
 	if(event.type == Mojo.Event.command) {
 		switch(event.command) {
-  
 			case 'do-myAbout':
 				this.controller.showAlertDialog({
 					onChoose: function(value) {},
@@ -29,14 +34,28 @@ StageAssistant.prototype.handleCommand = function(event) {
 					]
 				});
 				break;
-  
-			case 'do-appPrefs':
-				this.controller.pushScene("myAppPrefs");
+
+			case 'do-Timer':
+			{
+				if (this.currentSceneName != "timer")
+				{
+					this.currentSceneName = "timer";
+					StageController.swapScene(this.currentSceneName);
+				}
+				break;	
+			}
+
+			case 'do-Stopwatch':
+			{
+				if (this.currentSceneName != "stopwatch")
+					{
+						this.currentSceneName = "stopwatch";
+						StageController.swapScene(this.currentSceneName);
+					}
 				break;
-  
-			case 'do-appHelp':
-				this.controller.pushScene("myAppHelp");
-				break;
+			}
 		}
 	}
   }; 
+
+

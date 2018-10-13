@@ -6,23 +6,16 @@ function StopwatchAssistant() {
 }
 
 var running=false;
-var sceneTitle="Stopwatch";
 var timerStartValue=0;	//Value to start the timer at (non-0 for debugging)
 var stopWatchTimerValue=0;	//Init the timer (will be set later)
 var stopWatchTimerInterval;
 var lapCount = 0;
 var lapDivEmptyHTML = "<table class='watchLap'><tr><td>&nbsp;</td></tr></table>";
 
-
-
 StopwatchAssistant.prototype.btnStopHandler = function()
 {
-	//TODO: This is wonky if you stop and start without resetting
-	
 	Mojo.Log.info("The Stop button was pressed.");
-	//Stop Timer
-	running = false;
-	clearInterval(stopWatchTimerInterval);
+	this.stopTimer();
 
 	//Update watch face
 	document.getElementById("watchViewDetail").innerHTML = stopWatchTimerValue.toLongTimeValue();
@@ -33,6 +26,13 @@ StopwatchAssistant.prototype.btnStopHandler = function()
 	this.SetWidgetDisablement("btnStart", false);
 	this.SetWidgetDisablement("btnLapReset", false);
 	this.SetWidgetDisablement("btnStop", true);
+}
+
+StopwatchAssistant.prototype.stopTimer = function()
+{
+	//Stop Timer
+	running = false;
+	clearInterval(stopWatchTimerInterval);
 }
 
 StopwatchAssistant.prototype.btnLapResetHandler = function()
@@ -50,7 +50,8 @@ StopwatchAssistant.prototype.btnLapResetHandler = function()
 	else
 	{
 		Mojo.Log.info("The Reset button was pressed.");
-		
+		this.stopTimer();
+
 		//Reset global variables
 		lapCount = 0;
 		stopWatchTimerValue=timerStartValue;
@@ -164,12 +165,11 @@ StopwatchAssistant.prototype.incrementTimer = function()
 StopwatchAssistant.prototype.setup = function() {
 	Mojo.Log.info("Scene started."); 
 	/* this function is for setup tasks that have to happen when the scene is first created */
-	stopWatchTimerValue = timerStartValue;
 
 	/* use Mojo.View.render to render view templates and add them to the scene, if needed */
 	
 	/* setup widgets here */
-	this.controller.get("watchViewTitle").innerHTML = sceneTitle;
+	this.controller.get("watchViewTitle").innerHTML = "Stopwatch";
 	this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValue();
 	this.controller.get("watchLapTimes").innerHTML = "";
 	this.controller.get("watchLapPlaceholder").innerHTML = lapDivEmptyHTML + lapDivEmptyHTML;
@@ -196,9 +196,9 @@ StopwatchAssistant.prototype.setup = function() {
 			{},
 			{
 				items: [
-					{iconPath: 'images/count-up.png', command:'countUp'},
-					{iconPath: 'images/count-down.png', command:'countDown'}
-				],toggleCmd:'countUp', 
+					{iconPath: 'images/count-up.png', command:'do-Stopwatch'},
+					{iconPath: 'images/count-down.png', command:'do-Timer'}
+				],toggleCmd:'do-Stopwatch', 
 			},
 			{}
 		]
@@ -212,6 +212,11 @@ StopwatchAssistant.prototype.setup = function() {
 StopwatchAssistant.prototype.activate = function(event) {
 	/* put in event handlers here that should only be in effect when this scene is active. For
 	   example, key handlers that are observing the document */
+	stopWatchTimerValue = timerStartValue;
+	running=false;
+	stopWatchTimerValue=0;	//Init the timer (will be set later)
+	lapCount = 0;
+	
 	Mojo.Event.listen(this.controller.get('btnStop'), Mojo.Event.tap, this.btnStopHandler);
 	Mojo.Event.listen(this.controller.get('btnLapReset'), Mojo.Event.tap, this.btnLapResetHandler);
 	Mojo.Event.listen(this.controller.get('btnStart'), Mojo.Event.tap, this.btnStartHandler);
@@ -220,8 +225,10 @@ StopwatchAssistant.prototype.activate = function(event) {
 StopwatchAssistant.prototype.deactivate = function(event) {
 	/* remove any event handlers you added in activate and do any other cleanup that should happen before
 	   this scene is popped or another scene is pushed on top */
+	this.stopTimer();
+	
 	Mojo.Event.stopListening(this.controller.get('btnStop'),Mojo.Event.tap, this.btnStopHandler)
-	Mojo.Event.stopListening(this.controller.get('btnLapReset'),Mojo.Event.tap, this.btnLapResetResetHandler)
+	Mojo.Event.stopListening(this.controller.get('btnLapReset'),Mojo.Event.tap, this.btnLapResetHandler)
 	Mojo.Event.stopListening(this.controller.get('btnStart'),Mojo.Event.tap, this.btnStartHandler)
 };
 
