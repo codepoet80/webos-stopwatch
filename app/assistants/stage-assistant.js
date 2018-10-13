@@ -2,8 +2,6 @@ function StageAssistant() {
 	/* this is the creator function for your stage assistant object */
 }
 
-StageAssistant.prototype.currentSceneName = "";
-
 StageAssistant.prototype.setup = function() {
 
 	/* this function is for setup tasks that have to happen when the stage is first created */
@@ -14,14 +12,14 @@ StageAssistant.prototype.setup = function() {
 		items: [{label: "About Stopwatch", command: 'do-myAbout'}]
 	};
 
-	this.currentSceneName = "stopwatch";
-	this.controller.pushScene(this.currentSceneName);
+	this.controller.pushScene("stopwatch");
 };
 
 StageAssistant.prototype.handleCommand = function(event) {
 	this.controller=Mojo.Controller.stageController.activeScene();
 	StageController = Mojo.Controller.stageController;
-  
+	Mojo.Log.error("current scene: " + this.controller.sceneName);
+
 	if(event.type == Mojo.Event.command) {
 		switch(event.command) {
 			case 'do-myAbout':
@@ -37,20 +35,18 @@ StageAssistant.prototype.handleCommand = function(event) {
 
 			case 'do-Timer':
 			{
-				if (this.currentSceneName != "timer")
+				if (this.controller.sceneName != "timer")
 				{
-					this.currentSceneName = "timer";
-					StageController.swapScene(this.currentSceneName);
+					StageController.swapScene("timer");
 				}
 				break;	
 			}
 
 			case 'do-Stopwatch':
 			{
-				if (this.currentSceneName != "stopwatch")
+				if (this.controller.sceneName != "stopwatch")
 					{
-						this.currentSceneName = "stopwatch";
-						StageController.swapScene(this.currentSceneName);
+						StageController.swapScene("stopwatch");
 					}
 				break;
 			}
