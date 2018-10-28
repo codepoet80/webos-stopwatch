@@ -5,11 +5,14 @@ function StopwatchAssistant() {
 	   that needs the scene controller should be done in the setup function below. */
 }
 
+//Timer moves in 10ths of a second
 var running=false;
 var timerStartValue=0;	//Value to start the timer at (non-0 for debugging)
 var stopWatchTimerValue=0;	//Init the timer (will be set later)
+var stopWatchStartTime=0;
 var stopWatchTimerInterval;
-var lapCount = 0;
+var stayAwakeTime=600000;
+var lapCount = 0; //Value to start the laps at (non-0 for debugging)
 var lapDivEmptyHTML = "<table class='watchLap'><tr><td>&nbsp;</td></tr></table>";
 
 StopwatchAssistant.prototype.btnStopHandler = function()
@@ -31,8 +34,11 @@ StopwatchAssistant.prototype.btnStopHandler = function()
 StopwatchAssistant.prototype.stopTimer = function()
 {
 	//Stop Timer
+	Mojo.Log.info("Stopping timer.");
 	running = false;
 	clearInterval(stopWatchTimerInterval);
+
+	this.AskSystemStopActivity();
 }
 
 StopwatchAssistant.prototype.btnLapResetHandler = function()
@@ -41,11 +47,13 @@ StopwatchAssistant.prototype.btnLapResetHandler = function()
 	{
 		Mojo.Log.info("The Lap button was pressed.");
 		this.addLapToList(lapCount+1, stopWatchTimerValue);
+		this.AskSystemStopActivity();
 		
 		//Increment laps
 		this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValue();
 		stopWatchTimerValue=timerStartValue;
 		lapCount++;
+		this.AskSystemStartActivity();
 	}
 	else
 	{
@@ -64,8 +72,8 @@ StopwatchAssistant.prototype.btnLapResetHandler = function()
 	}
 }
 
-StopwatchAssistant.prototype.addLapToList = function(showLap, timerValue) {
-
+StopwatchAssistant.prototype.addLapToList = function(showLap, timerValue) 
+{
 	var rowTables = document.getElementById("watchLapTimes").children;
 	var rowExists = false;
 	//Check if this row exists and needs to be updated
@@ -103,8 +111,8 @@ StopwatchAssistant.prototype.addLapToList = function(showLap, timerValue) {
 	this.updateBestWorstLaps();
 }
 
-StopwatchAssistant.prototype.updateBestWorstLaps = function() {
-	
+StopwatchAssistant.prototype.updateBestWorstLaps = function() 
+{	
 	//Find lowest and highest laps
 	var highestLapTime = 0;
 	var lowestLapTime = 0;
@@ -144,29 +152,35 @@ StopwatchAssistant.prototype.updateBestWorstLaps = function() {
 
 StopwatchAssistant.prototype.btnStartHandler = function()
 {
-	Mojo.Log.info("The Start button was pressed.");
-	//Start Timer
-	running = true;
-	stopWatchTimerInterval = setInterval(this.incrementTimer, 100);
-
 	//Update UI
 	this.SetWidgetLabel("btnLapReset", "Lap");
 	this.SetWidgetDisablement("btnStart", true);
 	this.SetWidgetDisablement("btnLapReset", false);
 	this.SetWidgetDisablement("btnStop", false);
+
+	this.AskSystemStartActivity();
+
+	//Start Timer
+	running = true;
+	stopWatchStartTime = Date.now();
+	stopWatchTimerInterval = setInterval(this.incrementTimer, 100);
 }
 
 StopwatchAssistant.prototype.incrementTimer = function()
 {
-	stopWatchTimerValue++;
+	stopWatchTimerValue = (Date.now() - stopWatchStartTime) / 100;
 	document.getElementById("watchViewDetail").innerHTML = stopWatchTimerValue.toLongTimeValue();
 }
 
 StopwatchAssistant.prototype.setup = function() {
 	Mojo.Log.info("Scene started."); 
 	/* this function is for setup tasks that have to happen when the scene is first created */
-
-	/* use Mojo.View.render to render view templates and add them to the scene, if needed */
+	
+	//Load preferences
+	var stayAwakeTimeCookie = new Mojo.Model.Cookie('stopwatchTimer');
+	if (!isNAN(stayAwakeTimeCookie) && stayAwakeTimeCookie > 0)
+		stayAwakeTime = stayAwakeTimeCookie.get();		
+	stopwatchRunningCookie = new Mojo.Model.Cookie('stopwatchRunning');
 	
 	/* setup widgets here */
 	this.controller.get("watchViewTitle").innerHTML = "Stopwatch";
@@ -204,12 +218,19 @@ StopwatchAssistant.prototype.setup = function() {
 		]
 	};
 	this.controller.setupWidget(Mojo.Menu.commandMenu, this.cmdMenuAttributes, this.cmdMenuModel);
-
-	/* add event handlers to listen to events from widgets */
 	Mojo.Log.info("Scene setup done."); 
+
+	/* app-level event handlers */
+	Mojo.Event.listen(this.controller.stageController.document,	Mojo.Event.stageDeactivate, this.appDeactivated);
+	Mojo.Event.listen(this.controller.stageController.document,	Mojo.Event.stageActivate, this.appActivated);
 };
 
+StopwatchAssistant.prototype.appActivated = function(event) {
+	Mojo.Log.info("App stage has been (re)activated at: " + Date.now());
+}
+
 StopwatchAssistant.prototype.activate = function(event) {
+	Mojo.Log.info("Stopwatch scene activated.");
 	/* put in event handlers here that should only be in effect when this scene is active. For
 	   example, key handlers that are observing the document */
 	stopWatchTimerValue = timerStartValue;
@@ -222,10 +243,16 @@ StopwatchAssistant.prototype.activate = function(event) {
 	Mojo.Event.listen(this.controller.get('btnStart'), Mojo.Event.tap, this.btnStartHandler);
 };
 
+StopwatchAssistant.prototype.appDeactivated = function(event) {
+	Mojo.Log.info("App stage has been deactivated at: " + Date.now());
+}
+
 StopwatchAssistant.prototype.deactivate = function(event) {
+	Mojo.Log.info("Stopwatch scene deactivated.");
 	/* remove any event handlers you added in activate and do any other cleanup that should happen before
 	   this scene is popped or another scene is pushed on top */
 	this.stopTimer();
+	stopwatchCookie.put(0);		//Clear out memory of old timers
 	
 	Mojo.Event.stopListening(this.controller.get('btnStop'),Mojo.Event.tap, this.btnStopHandler)
 	Mojo.Event.stopListening(this.controller.get('btnLapReset'),Mojo.Event.tap, this.btnLapResetHandler)
@@ -235,7 +262,45 @@ StopwatchAssistant.prototype.deactivate = function(event) {
 StopwatchAssistant.prototype.cleanup = function(event) {
 	/* this function should do any cleanup needed before the scene is destroyed as 
 	   a result of being popped off the scene stack */
+	this.AskSystemStopActivity();
 };
+
+//Power management
+StopwatchAssistant.prototype.AskSystemStartActivity = function ()
+{
+	//Ask the System to stay awake while timer is running
+	this.controller.serviceRequest("palm://com.palm.power/com/palm/power", {
+		method: "activityStart",
+		parameters: {
+			id: "com.jonandnic.webos.stopwatch.countup-1",
+			duration_ms: stayAwakeTime
+		},
+		onSuccess: function(resp){
+			Mojo.Log.info("Starting timer activity");
+		}.bind(this),
+		onFailure: function(error){
+			Mojo.Log.error("Could not start timer activity: " +  JSON.stringify(error));
+			Mojo.Controller.errorDialog('Could not start timer activity: ' + JSON.stringify(error));
+		}.bind(this)
+	});
+}
+
+StopwatchAssistant.prototype.AskSystemStopActivity = function ()
+{
+	//Tell the System it doesn't have to stay awake any more
+	this.controller.serviceRequest("palm://com.palm.power/com/palm/power", {
+		method: "activityEnd",
+		parameters: {
+			id: "com.jonandnic.webos.stopwatch.countup-1"
+		},
+		onSuccess: function(resp){
+			Mojo.Log.info("Timer activity was stopped.");
+		}.bind(this),
+		onFailure: function(error){
+			Mojo.Controller.errorDialog('Error : ' + JSON.stringify(error))
+		}.bind(this)
+	});
+}
 
 //Helper functions
 StopwatchAssistant.prototype.SetWidgetDisablement = function(widgetName, newvalue)
