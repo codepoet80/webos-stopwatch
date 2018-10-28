@@ -51,7 +51,7 @@ StopwatchAssistant.prototype.btnLapResetHandler = function()
 		
 		//Increment laps
 		this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValue();
-		stopWatchTimerValue=timerStartValue;
+		stopWatchStartTime=Date.now();
 		lapCount++;
 		this.AskSystemStartActivity();
 	}
@@ -178,7 +178,7 @@ StopwatchAssistant.prototype.setup = function() {
 	
 	//Load preferences
 	var stayAwakeTimeCookie = new Mojo.Model.Cookie('stopwatchTimer');
-	if (!isNAN(stayAwakeTimeCookie) && stayAwakeTimeCookie > 0)
+	if (!isNaN(stayAwakeTimeCookie) && stayAwakeTimeCookie > 0)
 		stayAwakeTime = stayAwakeTimeCookie.get();		
 	stopwatchRunningCookie = new Mojo.Model.Cookie('stopwatchRunning');
 	
