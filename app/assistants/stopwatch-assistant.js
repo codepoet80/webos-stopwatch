@@ -246,8 +246,6 @@ StopwatchAssistant.prototype.handleUpdate = function(event){
 
 StopwatchAssistant.prototype.appActivated = function(event) {
 	Mojo.Log.info("App stage has been (re)activated at: " + Date.now());
-	if (running)
-		this.PreventDisplaySleep();
 }
 
 StopwatchAssistant.prototype.activate = function(event) {
@@ -261,11 +259,13 @@ StopwatchAssistant.prototype.activate = function(event) {
 	Mojo.Event.listen(this.controller.get('btnStop'), Mojo.Event.tap, this.btnStopHandler);
 	Mojo.Event.listen(this.controller.get('btnLapReset'), Mojo.Event.tap, this.btnLapResetHandler);
 	Mojo.Event.listen(this.controller.get('btnStart'), Mojo.Event.tap, this.btnStartHandler);
+
+	if (running)
+		this.PreventDisplaySleep();
 };
 
 StopwatchAssistant.prototype.appDeactivated = function(event) {
 	Mojo.Log.info("App stage has been deactivated at: " + Date.now());
-	this.AllowDisplaySleep();
 }
 
 StopwatchAssistant.prototype.deactivate = function(event) {
