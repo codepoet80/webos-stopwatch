@@ -24,14 +24,14 @@ StopwatchAssistant.prototype.btnStartHandler = function()
 	stopWatchStartTime = Date.now();
 	lapStartTime = Date.now();
 	stopWatchTimerInterval = setInterval(this.incrementTimer, 100);
-
+	this.PreventDisplaySleep();
+	
 	//Update UI
 	this.SetWidgetLabel("btnLapReset", "Lap");
 	this.SetWidgetDisablement("btnStart", true);
 	this.SetWidgetDisablement("btnLapReset", false);
 	this.SetWidgetDisablement("btnStop", false);
 	this.PlaySound("down2");
-	this.PreventDisplaySleep();
 }
 
 StopwatchAssistant.prototype.incrementTimer = function()
