@@ -5,30 +5,64 @@ function StopwatchAssistant() {
 	   that needs the scene controller should be done in the setup function below. */
 }
 
-//Timer moves in 10ths of a second
 var running=false;
 var timerStartValue=0;	//Value to start the timer at (non-0 for debugging)
-var stopWatchTimerValue=0;	//Init the timer (will be set later)
 var stopWatchStartTime=0;
+var stopWatchTimerValue=0;
+var lapStartTime=0;	
+var lapTimerValue=0;
+var lapCount = 0; //Value to start the laps at (non-0 for debugging)
 var stopWatchTimerInterval;
 var stayAwakeTime=600000;
-var lapCount = 0; //Value to start the laps at (non-0 for debugging)
 var lapDivEmptyHTML = "<table class='watchLap'><tr><td>&nbsp;</td></tr></table>";
+
+StopwatchAssistant.prototype.btnStartHandler = function()
+{
+	Mojo.Log.info("starting timer at " + stopWatchTimerValue)
+	running = true;
+
+	//Record start times and start timers
+	stopWatchStartTime = Date.now();
+	lapStartTime = Date.now();
+	stopWatchTimerInterval = setInterval(this.incrementTimer, 100);
+
+	//Update UI
+	this.SetWidgetLabel("btnLapReset", "Lap");
+	this.SetWidgetDisablement("btnStart", true);
+	this.SetWidgetDisablement("btnLapReset", false);
+	this.SetWidgetDisablement("btnStop", false);
+	this.PlaySound("down2");
+}
+
+StopwatchAssistant.prototype.incrementTimer = function()
+{
+	//Increment timer
+	var stopwatchTimerOffset = Date.now() - stopWatchStartTime;
+	var showTimerValue = stopWatchTimerValue + stopwatchTimerOffset;
+	document.getElementById("watchViewDetail").innerHTML = (showTimerValue / 100).toLongTimeValue();
+}
 
 StopwatchAssistant.prototype.btnStopHandler = function()
 {
 	Mojo.Log.info("The Stop button was pressed.");
+	running = false;
 	this.stopTimer();
 
 	//Update watch face
-	document.getElementById("watchViewDetail").innerHTML = stopWatchTimerValue.toLongTimeValue();
-	this.addLapToList(lapCount+1, stopWatchTimerValue);
+	var	stoppedTime = Number(stopWatchTimerValue / 100);
+	document.getElementById("watchViewDetail").innerHTML = stoppedTime.toLongTimeValue();
+	
+	//Update laps
+	var lapTimerOffset = Date.now() - lapStartTime;
+	lapTimerValue = lapTimerValue + lapTimerOffset;;
+	this.addLapToList(lapCount+1, (lapTimerValue / 100));
 
 	//Update UI
 	this.SetWidgetLabel("btnLapReset", "Reset");
 	this.SetWidgetDisablement("btnStart", false);
 	this.SetWidgetDisablement("btnLapReset", false);
 	this.SetWidgetDisablement("btnStop", true);
+	this.PlaySound("down2");
 }
 
 StopwatchAssistant.prototype.stopTimer = function()
@@ -38,29 +72,35 @@ StopwatchAssistant.prototype.stopTimer = function()
 	running = false;
 	clearInterval(stopWatchTimerInterval);
 
-	this.AskSystemStopActivity();
+	var stopwatchTimerOffset = Date.now() - stopWatchStartTime;
+	stopWatchTimerValue = stopWatchTimerValue + stopwatchTimerOffset;
 }
 
 StopwatchAssistant.prototype.btnLapResetHandler = function()
 {
-	if (running)
+	if (running)	//Lap Button
 	{
 		Mojo.Log.info("The Lap button was pressed.");
-		this.addLapToList(lapCount+1, stopWatchTimerValue);
-		this.AskSystemStopActivity();
+		var lapTimerOffset = Date.now() - lapStartTime;
+		lapTimerValue = lapTimerValue + lapTimerOffset;;
+		this.addLapToList(lapCount+1, (lapTimerValue / 100));
 		
 		//Increment laps
-		this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValue();
-		stopWatchStartTime=Date.now();
+		lapStartTime=Date.now();
+		lapTimerOffset=0;
+		lapTimerValue=0;
 		lapCount++;
-		this.AskSystemStartActivity();
+		this.PlaySound("up2");
 	}
-	else
+	else	//Reset Button
 	{
 		Mojo.Log.info("The Reset button was pressed.");
 		this.stopTimer();
+		running = false;
 
 		//Reset global variables
+		lapTimerOffset=0;
+		lapTimerValue=0;
 		lapCount = 0;
 		stopWatchTimerValue=timerStartValue;
 		this.SetWidgetDisablement("btnLapReset", true);
@@ -68,7 +108,8 @@ StopwatchAssistant.prototype.btnLapResetHandler = function()
 		//Reset the timer
 		this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValue();
 		this.controller.get("watchLapTimes").innerHTML = "";
-		this.controller.get("watchLapPlaceholder").innerHTML = lapDivEmptyHTML + lapDivEmptyHTML
+		this.controller.get("watchLapPlaceholder").innerHTML = lapDivEmptyHTML + lapDivEmptyHTML;
+		this.PlaySound("delete_01");
 	}
 }
 
@@ -88,7 +129,7 @@ StopwatchAssistant.prototype.addLapToList = function(showLap, timerValue)
 			{
 				var currColumn = countColumn[j];
 				currColumn.title = timerValue.toString();
-				currColumn.innerHTML = timerValue.toLongTimeValue();
+				currColumn.innerHTML = Number(timerValue).toLongTimeValue();
 			}
 		}
 	}
@@ -98,7 +139,7 @@ StopwatchAssistant.prototype.addLapToList = function(showLap, timerValue)
 		Mojo.Log.info("Creating new lap row " + showLap + " with time " + timerValue);
 		var newLap = "<table class='watchLap' id='Lap" + showLap + "'><tr><td class='leftLap'>Lap " + 
 			showLap + "</td><td class='rightLap' title='" + timerValue.toString() + "'>" + 
-			timerValue.toLongTimeValue() + "</td></tr></table>";
+			Number(timerValue).toLongTimeValue() + "</td></tr></table>";
 		this.controller.get("watchLapTimes").innerHTML = newLap + this.controller.get("watchLapTimes").innerHTML;
 	}
 	//Add placeholder rows if needed
@@ -150,32 +191,11 @@ StopwatchAssistant.prototype.updateBestWorstLaps = function()
 	}
 }
 
-StopwatchAssistant.prototype.btnStartHandler = function()
-{
-	//Update UI
-	this.SetWidgetLabel("btnLapReset", "Lap");
-	this.SetWidgetDisablement("btnStart", true);
-	this.SetWidgetDisablement("btnLapReset", false);
-	this.SetWidgetDisablement("btnStop", false);
-
-	this.AskSystemStartActivity();
-
-	//Start Timer
-	running = true;
-	stopWatchStartTime = Date.now();
-	stopWatchTimerInterval = setInterval(this.incrementTimer, 100);
-}
-
-StopwatchAssistant.prototype.incrementTimer = function()
-{
-	stopWatchTimerValue = (Date.now() - stopWatchStartTime) / 100;
-	document.getElementById("watchViewDetail").innerHTML = stopWatchTimerValue.toLongTimeValue();
-}
-
 StopwatchAssistant.prototype.setup = function() {
 	Mojo.Log.info("Scene started."); 
 	/* this function is for setup tasks that have to happen when the scene is first created */
-	
+	this.handleUpdate = this.handleUpdate.bind(this); 
+
 	//Load preferences
 	var stayAwakeTimeCookie = new Mojo.Model.Cookie('stopwatchTimer');
 	if (!isNaN(stayAwakeTimeCookie) && stayAwakeTimeCookie > 0)
@@ -225,6 +245,10 @@ StopwatchAssistant.prototype.setup = function() {
 	Mojo.Event.listen(this.controller.stageController.document,	Mojo.Event.stageActivate, this.appActivated);
 };
 
+StopwatchAssistant.prototype.handleUpdate = function(event){
+	this.powerManagerState = event.value;
+}
+
 StopwatchAssistant.prototype.appActivated = function(event) {
 	Mojo.Log.info("App stage has been (re)activated at: " + Date.now());
 }
@@ -241,6 +265,7 @@ StopwatchAssistant.prototype.activate = function(event) {
 	Mojo.Event.listen(this.controller.get('btnStop'), Mojo.Event.tap, this.btnStopHandler);
 	Mojo.Event.listen(this.controller.get('btnLapReset'), Mojo.Event.tap, this.btnLapResetHandler);
 	Mojo.Event.listen(this.controller.get('btnStart'), Mojo.Event.tap, this.btnStartHandler);
+	this.AskSystemStartActivity();
 };
 
 StopwatchAssistant.prototype.appDeactivated = function(event) {
@@ -252,11 +277,11 @@ StopwatchAssistant.prototype.deactivate = function(event) {
 	/* remove any event handlers you added in activate and do any other cleanup that should happen before
 	   this scene is popped or another scene is pushed on top */
 	this.stopTimer();
-	stopwatchCookie.put(0);		//Clear out memory of old timers
 	
 	Mojo.Event.stopListening(this.controller.get('btnStop'),Mojo.Event.tap, this.btnStopHandler)
 	Mojo.Event.stopListening(this.controller.get('btnLapReset'),Mojo.Event.tap, this.btnLapResetHandler)
 	Mojo.Event.stopListening(this.controller.get('btnStart'),Mojo.Event.tap, this.btnStartHandler)
+	this.AskSystemStopActivity();
 };
 
 StopwatchAssistant.prototype.cleanup = function(event) {
@@ -265,40 +290,37 @@ StopwatchAssistant.prototype.cleanup = function(event) {
 	this.AskSystemStopActivity();
 };
 
+
 //Power management
 StopwatchAssistant.prototype.AskSystemStartActivity = function ()
 {
 	//Ask the System to stay awake while timer is running
-	this.controller.serviceRequest("palm://com.palm.power/com/palm/power", {
+	Mojo.Log.info("requesting power access from system");
+
+	 // keep the device from sleeping (max 15 minutes)
+	 this.controller.serviceRequest("palm://com.palm.power/com/palm/power", {
 		method: "activityStart",
 		parameters: {
-			id: "com.jonandnic.webos.stopwatch.countup-1",
-			duration_ms: stayAwakeTime
+		  id: Mojo.appInfo.id + "-1",
+		  duration_ms: stayAwakeTime
 		},
-		onSuccess: function(resp){
-			Mojo.Log.info("Starting timer activity");
-		}.bind(this),
-		onFailure: function(error){
-			Mojo.Log.error("Could not start timer activity: " +  JSON.stringify(error));
-			Mojo.Controller.errorDialog('Could not start timer activity: ' + JSON.stringify(error));
-		}.bind(this)
-	});
+		onSuccess: function() { Mojo.Log.info("created stay-awake activity!");},
+		onFailure: function() { Mojo.Log.info("failed to create stay-awake activity!");}
+	  });
+	  setTimeout(this.AskSystemStartActivity.bind(this), 5 * 60 * 1000);
 }
 
 StopwatchAssistant.prototype.AskSystemStopActivity = function ()
 {
 	//Tell the System it doesn't have to stay awake any more
+	Mojo.Log.info("remove power access from system");
 	this.controller.serviceRequest("palm://com.palm.power/com/palm/power", {
 		method: "activityEnd",
 		parameters: {
-			id: "com.jonandnic.webos.stopwatch.countup-1"
+			id: Mojo.appInfo.id + "-1",
 		},
-		onSuccess: function(resp){
-			Mojo.Log.info("Timer activity was stopped.");
-		}.bind(this),
-		onFailure: function(error){
-			Mojo.Controller.errorDialog('Error : ' + JSON.stringify(error))
-		}.bind(this)
+		onSuccess: function() {},
+		onFailure: function() {}
 	});
 }
 
@@ -317,6 +339,18 @@ StopwatchAssistant.prototype.SetWidgetLabel = function(widgetName, newvalue)
 	var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
 	thisWidgetModel.label = newvalue;
 	this.controller.setWidgetModel(widgetName, thisWidgetModel);
+}
+
+StopwatchAssistant.prototype.PlaySound = function(soundName)
+{
+	this.controller.serviceRequest("palm://com.palm.audio/systemsounds", {
+		method: "playFeedback",
+		parameters: {
+			name: soundName
+		},
+		onSuccess:{},
+		onFailure:{}
+	});
 }
 
 Number.prototype.toLongTimeValue = function() {
