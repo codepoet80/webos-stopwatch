@@ -13,7 +13,6 @@ var lapStartTime=0;
 var lapTimerValue=0;
 var lapCount = 0; //Value to start the laps at (non-0 for debugging)
 var stopWatchTimerInterval;
-var stayAwakeTime=600000;
 var lapDivEmptyHTML = "<table class='watchLap'><tr><td>&nbsp;</td></tr></table>";
 
 StopwatchAssistant.prototype.btnStartHandler = function()
@@ -32,6 +31,7 @@ StopwatchAssistant.prototype.btnStartHandler = function()
 	this.SetWidgetDisablement("btnLapReset", false);
 	this.SetWidgetDisablement("btnStop", false);
 	this.PlaySound("down2");
+	this.PreventDisplaySleep();
 }
 
 StopwatchAssistant.prototype.incrementTimer = function()
@@ -63,6 +63,7 @@ StopwatchAssistant.prototype.btnStopHandler = function()
 	this.SetWidgetDisablement("btnLapReset", false);
 	this.SetWidgetDisablement("btnStop", true);
 	this.PlaySound("down2");
+	this.AllowDisplaySleep();
 }
 
 StopwatchAssistant.prototype.stopTimer = function()
@@ -195,12 +196,6 @@ StopwatchAssistant.prototype.setup = function() {
 	Mojo.Log.info("Scene started."); 
 	/* this function is for setup tasks that have to happen when the scene is first created */
 	this.handleUpdate = this.handleUpdate.bind(this); 
-
-	//Load preferences
-	var stayAwakeTimeCookie = new Mojo.Model.Cookie('stopwatchTimer');
-	if (!isNaN(stayAwakeTimeCookie) && stayAwakeTimeCookie > 0)
-		stayAwakeTime = stayAwakeTimeCookie.get();		
-	stopwatchRunningCookie = new Mojo.Model.Cookie('stopwatchRunning');
 	
 	/* setup widgets here */
 	this.controller.get("watchViewTitle").innerHTML = "Stopwatch";
@@ -251,6 +246,8 @@ StopwatchAssistant.prototype.handleUpdate = function(event){
 
 StopwatchAssistant.prototype.appActivated = function(event) {
 	Mojo.Log.info("App stage has been (re)activated at: " + Date.now());
+	if (running)
+		this.PreventDisplaySleep();
 }
 
 StopwatchAssistant.prototype.activate = function(event) {
@@ -259,17 +256,16 @@ StopwatchAssistant.prototype.activate = function(event) {
 	   example, key handlers that are observing the document */
 	stopWatchTimerValue = timerStartValue;
 	running=false;
-	stopWatchTimerValue=0;	//Init the timer (will be set later)
 	lapCount = 0;
 	
 	Mojo.Event.listen(this.controller.get('btnStop'), Mojo.Event.tap, this.btnStopHandler);
 	Mojo.Event.listen(this.controller.get('btnLapReset'), Mojo.Event.tap, this.btnLapResetHandler);
 	Mojo.Event.listen(this.controller.get('btnStart'), Mojo.Event.tap, this.btnStartHandler);
-	this.AskSystemStartActivity();
 };
 
 StopwatchAssistant.prototype.appDeactivated = function(event) {
 	Mojo.Log.info("App stage has been deactivated at: " + Date.now());
+	this.AllowDisplaySleep();
 }
 
 StopwatchAssistant.prototype.deactivate = function(event) {
@@ -281,46 +277,34 @@ StopwatchAssistant.prototype.deactivate = function(event) {
 	Mojo.Event.stopListening(this.controller.get('btnStop'),Mojo.Event.tap, this.btnStopHandler)
 	Mojo.Event.stopListening(this.controller.get('btnLapReset'),Mojo.Event.tap, this.btnLapResetHandler)
 	Mojo.Event.stopListening(this.controller.get('btnStart'),Mojo.Event.tap, this.btnStartHandler)
-	this.AskSystemStopActivity();
+	this.AllowDisplaySleep();
 };
 
 StopwatchAssistant.prototype.cleanup = function(event) {
 	/* this function should do any cleanup needed before the scene is destroyed as 
 	   a result of being popped off the scene stack */
-	this.AskSystemStopActivity();
+	this.AllowDisplaySleep();
 };
 
 
 //Power management
-StopwatchAssistant.prototype.AskSystemStartActivity = function ()
+StopwatchAssistant.prototype.PreventDisplaySleep = function ()
 {
 	//Ask the System to stay awake while timer is running
-	Mojo.Log.info("requesting power access from system");
+	Mojo.Log.info("preventing display sleep");
 
-	 // keep the device from sleeping (max 15 minutes)
-	 this.controller.serviceRequest("palm://com.palm.power/com/palm/power", {
-		method: "activityStart",
-		parameters: {
-		  id: Mojo.appInfo.id + "-1",
-		  duration_ms: stayAwakeTime
-		},
-		onSuccess: function() { Mojo.Log.info("created stay-awake activity!");},
-		onFailure: function() { Mojo.Log.info("failed to create stay-awake activity!");}
-	  });
-	  setTimeout(this.AskSystemStartActivity.bind(this), 5 * 60 * 1000);
+	this.controller.stageController.setWindowProperties({
+		blockScreenTimeout: true
+	});
 }
 
-StopwatchAssistant.prototype.AskSystemStopActivity = function ()
+StopwatchAssistant.prototype.AllowDisplaySleep = function ()
 {
 	//Tell the System it doesn't have to stay awake any more
-	Mojo.Log.info("remove power access from system");
-	this.controller.serviceRequest("palm://com.palm.power/com/palm/power", {
-		method: "activityEnd",
-		parameters: {
-			id: Mojo.appInfo.id + "-1",
-		},
-		onSuccess: function() {},
-		onFailure: function() {}
+	Mojo.Log.info("allowing display sleep");
+
+	this.controller.stageController.setWindowProperties({
+		blockScreenTimeout: true
 	});
 }
 
@@ -330,8 +314,6 @@ StopwatchAssistant.prototype.SetWidgetDisablement = function(widgetName, newvalu
 	var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
 	thisWidgetModel.disabled = newvalue;
 	this.controller.setWidgetModel(widgetName, thisWidgetModel);
-	//This might not be necessary. Nothing seems to care, but this site said to do it: https://semisignal.com/changing-the-model-of-activity-buttons-on-webos/
-	//	this.controller.modelChanged(this.controller.get(widgetName));
 }
 
 StopwatchAssistant.prototype.SetWidgetLabel = function(widgetName, newvalue)
