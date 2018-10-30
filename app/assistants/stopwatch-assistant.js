@@ -193,9 +193,8 @@ StopwatchAssistant.prototype.updateBestWorstLaps = function()
 }
 
 StopwatchAssistant.prototype.setup = function() {
-	Mojo.Log.info("Scene started."); 
+	Mojo.Log.info("Stopwatch scene started."); 
 	/* this function is for setup tasks that have to happen when the scene is first created */
-	this.handleUpdate = this.handleUpdate.bind(this); 
 	
 	/* setup widgets here */
 	this.controller.get("watchViewTitle").innerHTML = "Stopwatch";
@@ -239,10 +238,6 @@ StopwatchAssistant.prototype.setup = function() {
 	Mojo.Event.listen(this.controller.stageController.document,	Mojo.Event.stageDeactivate, this.appDeactivated);
 	Mojo.Event.listen(this.controller.stageController.document,	Mojo.Event.stageActivate, this.appActivated);
 };
-
-StopwatchAssistant.prototype.handleUpdate = function(event){
-	this.powerManagerState = event.value;
-}
 
 StopwatchAssistant.prototype.appActivated = function(event) {
 	Mojo.Log.info("App stage has been (re)activated at: " + Date.now());

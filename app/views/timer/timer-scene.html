@@ -1,4 +1,30 @@
-<!-- TODO: replace the contents of this file with your own html -->
-<div class="palm-body-text">
-	This scene will have a timer -- count down from a value, rather than up.
+<div class="palm-hasheader">
+	<div id="timerViewTitle" class="palm-header center">
+		Timer
+	</div>
 </div>
+
+<div id="timerViewFace" class="palm-body-text watchFace" style="visibility: visible"></div>
+<div id="timerViewPicker" class="palm-body-text" style="visibility: collapse">
+	<table class="timerPickerContainer"><tr><td align="right">
+		<div class="timerPickerElement" id="hour_field" name="hour_field" x-mojo-element="IntegerPicker"></div>
+	</td><td align="left" class="timerPickerElement"> : </td><td style="padding-left: 1px;">
+		<div class="timerPickerElement" id="minute_field" name="minute_field" x-mojo-element="IntegerPicker"></div>
+	</td></tr></table>
+</div>
+<table width="100%" class="timerButtons">
+<tr>
+	<td width="33%">
+			<div x-mojo-element="Button" id="btnStart"></div>
+	</td>
+	<td width="33%">
+			<div x-mojo-element="Button" id="btnReset"></div>
+	</td>
+	<td width="33%">
+			<div x-mojo-element="Button" id="btnStop"></div>
+	</td>
+</tr>
+</table>
+
+<div id="timerCompleteTitleDiv">When Timer Completes: </div>
+<div id="timerCompleteOptionsDiv">Play a sound</div>
