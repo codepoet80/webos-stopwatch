@@ -4,14 +4,13 @@
 	</div>
 </div>
 
-<div id="timerViewFace" class="palm-body-text watchFace" style="visibility: visible"></div>
-<div id="timerViewPicker" class="palm-body-text" style="visibility: collapse">
-	<table class="timerPickerContainer"><tr><td align="right">
-		<div class="timerPickerElement" id="hour_field" name="hour_field" x-mojo-element="IntegerPicker"></div>
-	</td><td align="left" class="timerPickerElement"> : </td><td style="padding-left: 1px;">
-		<div class="timerPickerElement" id="minute_field" name="minute_field" x-mojo-element="IntegerPicker"></div>
-	</td></tr></table>
+<div id="timerViewFace" class="palm-body-text watchFace" style="display: block"></div>
+
+<div id='timerViewPicker' class="palm-body-text timerPicker" style='display: none; text-align: center; padding-left:8px;'>
+	<div id="hour_field" name="hour_field" class="timerPickerElement" x-mojo-element="IntegerPicker" style='display: inline-block; '></div>
+	<div id="minute_field" name="minute_field" class="timerPickerElement" x-mojo-element="IntegerPicker" style='display: inline-block; '></div>
 </div>
+
 <table width="100%" class="timerButtons">
 <tr>
 	<td width="33%">
@@ -25,6 +24,10 @@
 	</td>
 </tr>
 </table>
+
+<div id="runningPlaceholder" style="margin-top:18px; height:35px;">
+	<div x-mojo-element="Spinner" id="runningSpinner" class="spinnerClass" name="runningSpinner" style='margin:auto;'></div>
+</div>
 
 <div id="timerCompleteTitleDiv">When Timer Completes: </div>
 <div id="timerCompleteOptionsDiv">Play a sound</div>

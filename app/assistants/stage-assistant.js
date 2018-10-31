@@ -18,7 +18,6 @@ StageAssistant.prototype.setup = function() {
 StageAssistant.prototype.handleCommand = function(event) {
 	this.controller=Mojo.Controller.stageController.activeScene();
 	StageController = Mojo.Controller.stageController;
-	Mojo.Log.error("current scene: " + this.controller.sceneName);
 
 	if(event.type == Mojo.Event.command) {
 		switch(event.command) {
@@ -52,6 +51,7 @@ StageAssistant.prototype.handleCommand = function(event) {
 			}
 		}
 	}
+	Mojo.Log.info("current scene: " + this.controller.sceneName);
   }; 
 
 

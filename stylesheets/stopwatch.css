@@ -11,6 +11,12 @@ body{
     font-size: 4.5em;
     text-align: center;
 }
+.timerPicker {
+    height: 80vh;
+    margin-top: 84px;
+    margin-bottom: 24px;
+    text-align: center;
+}
 .watchButtons {
     margin-bottom: 10px;
 }
