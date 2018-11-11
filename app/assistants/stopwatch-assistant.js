@@ -299,7 +299,7 @@ StopwatchAssistant.prototype.AllowDisplaySleep = function ()
 	Mojo.Log.info("allowing display sleep");
 
 	this.controller.stageController.setWindowProperties({
-		blockScreenTimeout: true
+		blockScreenTimeout: false
 	});
 }
 
