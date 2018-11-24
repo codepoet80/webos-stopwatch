@@ -14,6 +14,10 @@ TimerAssistant.prototype.btnStartHandler = function()
 	Mojo.Log.info("Start button pressed!");
 	var Hours = Number((this.controller.get("hour_field").innerText).trim());
 	var Mins = Number((this.controller.get("minute_field").innerText).trim());
+	if (Hours < 10)
+		Hours = "0" + Hours;
+	if (Mins < 10)
+		Mins = "0" + Mins;
 	Mojo.Controller.getAppController().showBanner("Count down: "+ Hours + " hours, " + Mins + " minutes...", {source: 'notification'});
 	Mojo.Additions.DisableWidget("btnStop", false);
 	document.getElementById('runningSpinner').style.display = "block";
@@ -24,6 +28,7 @@ TimerAssistant.prototype.btnStartHandler = function()
 	Mojo.Log.info("Timer set for " + timerDuration + " milliseconds");
 	timerInterval = setInterval(this.incrementTimer, 1000);
 	//Setup system alarm
+	systemService.SetSystemAlarmRelative("JonsTimer", Hours + ":" + Mins + ":00.00");
 }
 
 TimerAssistant.prototype.incrementTimer = function()
@@ -36,11 +41,26 @@ TimerAssistant.prototype.incrementTimer = function()
 		clearInterval(timerInterval);
 		document.getElementById("timerViewFace").innerHTML = "00:00";
 		document.getElementById('runningSpinner').style.display = "none";
+		Mojo.Additions.DisableWidget("btnStop", true);
+		Mojo.Additions.DisableWidget("btnStart", true);
 	}
 	else
 	{
 		document.getElementById("timerViewFace").innerHTML = showTimerValue.toLongTimeValue();
 	}
+}
+
+TimerAssistant.prototype.timerDone = function()
+{
+	//TODO: Need app assistant to re-direct here with args
+
+	//grab focus
+	//Clear system timer
+	systemService.ClearSystemAlarm("JonsTimer");
+	//figure out how to make a sound
+	Mojo.Controller.getAppController().showBanner("Timer finished!", {source: 'notification'});
+	Mojo.Controller.getAppController().playSoundNotification('vibrate', "/media/internal/ringtones/Rain Dance.mp3", 5);
+	//figure out how to vibrate
 }
 
 TimerAssistant.prototype.btnResetHandler = function()

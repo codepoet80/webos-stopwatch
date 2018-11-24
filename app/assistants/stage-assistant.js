@@ -1,6 +1,8 @@
+var systemService = null;
 function StageAssistant() {
 	/* this is the creator function for your stage assistant object */
 	Mojo.Additions = Additions;
+	systemService = new SystemService();
 }
 
 StageAssistant.prototype.setup = function() {
@@ -53,8 +55,4 @@ StageAssistant.prototype.handleCommand = function(event) {
 		}
 	}
 	Mojo.Log.info("current scene: " + this.controller.sceneName);
-  }; 
-
-
-
-
+}; 
