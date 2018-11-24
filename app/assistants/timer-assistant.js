@@ -14,8 +14,8 @@ TimerAssistant.prototype.btnStartHandler = function()
 	Mojo.Log.info("Start button pressed!");
 	var Hours = Number((this.controller.get("hour_field").innerText).trim());
 	var Mins = Number((this.controller.get("minute_field").innerText).trim());
-	this.showDialogBox("Count Down!", "From " + Hours + " hours, " + Mins + " minutes . . .");
-	this.SetWidgetDisablement("btnStop", false);
+	Mojo.Controller.getAppController().showBanner("Count down: "+ Hours + " hours, " + Mins + " minutes...", {source: 'notification'});
+	Mojo.Additions.DisableWidget("btnStop", false);
 	document.getElementById('runningSpinner').style.display = "block";
 	//Start timers
 	timerStartTime = Date.now();
@@ -47,7 +47,7 @@ TimerAssistant.prototype.btnResetHandler = function()
 {
 	Mojo.Log.info("Reset button pressed!");
 	this.btnStopHandler();
-	this.SetWidgetDisablement("btnStart", true);
+	Mojo.Additions.DisableWidget("btnStart", true);
 	this.controller.get("timerViewFace").innerHTML = "00:00";
 	this.SetPickerValue("hour_field", "0");
 	this.SetPickerValue("minute_field", "1");
@@ -61,8 +61,8 @@ TimerAssistant.prototype.btnStopHandler = function()
 	//Cancel timers
 	clearInterval(timerInterval);
 	//Cancel system alarm
-	this.SetWidgetDisablement("btnStart", false);
-	this.SetWidgetDisablement("btnStop", true);
+	Mojo.Additions.DisableWidget("btnStart", false);
+	Mojo.Additions.DisableWidget("btnStop", true);
 	document.getElementById('runningSpinner').style.display = "none";
 }
 
@@ -73,7 +73,7 @@ TimerAssistant.prototype.setup = function() {
 	/* setup widgets here */
 	this.controller.get("timerViewTitle").innerHTML = "Timer";
 	this.controller.get("timerViewFace").innerHTML = "00:00";
-	this.controller.get("timerCompleteOptionsDiv").innerHTML = "Play a sound";
+	//this.controller.get("timerCompleteOptionsDiv").innerHTML = "Play a sound";
 
 	this.controller.setupWidget('btnStop', this.attributes={}, this.model={label:"Stop", buttonClass: 'palm-button negative buttonfloat', disabled: true});
 	this.btnStopHandler = this.btnStopHandler.bind(this);
@@ -201,36 +201,9 @@ TimerAssistant.prototype.propertyChanged = function(event){
 
 	if (Number(Mins) > 0 || Number(Hours) > 0)
 	{
-		this.SetWidgetDisablement("btnStart", false);
+		Mojo.Additions.DisableWidget("btnStart", false);
 	}
 	//this.showDialogBox("Integer changed", "The value of the Integer field is now: " + event.value);
-}
-
-TimerAssistant.prototype.enumerateObject = function(yourObject)
-{
-	for (var key in yourObject) {
-		Mojo.Log.info("=== prop:" + key + ": " + yourObject[key]);
-		if (yourObject.hasOwnProperty(key)) {
-		   var obj = yourObject[key];
-		   for (var prop in obj) {
-			  if (obj.hasOwnProperty(prop)) {
-				 Mojo.Log.info("...... sub: " + prop + " = " + obj[prop])
-			  }
-		   }
-		}
-	 }
-}
-
-TimerAssistant.prototype.showDialogBox = function(title, description)
-{
-	this.controller.showAlertDialog({
-		onChoose: function(value) {},
-		title: $L(title),
-		message: $L(description),
-		choices:[
-			{label:$L("OK"), value:""}
-		]
-	});
 }
 
 TimerAssistant.prototype.SetPickerValue = function(widgetName, newvalue)
@@ -241,13 +214,6 @@ TimerAssistant.prototype.SetPickerValue = function(widgetName, newvalue)
 }
 
 //Helper functions
-TimerAssistant.prototype.SetWidgetDisablement = function(widgetName, newvalue)
-{
-	var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
-	thisWidgetModel.disabled = newvalue;
-	this.controller.setWidgetModel(widgetName, thisWidgetModel);
-}
-
 Number.prototype.toLongTimeValue = function() {
 
 	//Calculate time segments

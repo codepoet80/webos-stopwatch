@@ -1,5 +1,6 @@
 function StageAssistant() {
 	/* this is the creator function for your stage assistant object */
+	Mojo.Additions = Additions;
 }
 
 StageAssistant.prototype.setup = function() {

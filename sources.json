@@ -7,5 +7,6 @@
     {
         "scenes": "timer",
         "source": "app/assistants/timer-assistant.js"
-    }
+    },
+    {"source": "app/models/system-service.js"}
 ]
