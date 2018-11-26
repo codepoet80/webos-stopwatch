@@ -5,42 +5,58 @@ function TimerAssistant() {
 	   that needs the scene controller should be done in the setup function below. */
 }
 
+var running;
 var timerInterval;
 var timerStartTime;
 var timerDuration;
+var timerCount;
 var timerResetValue = "00:00:00";
 
 TimerAssistant.prototype.btnStartHandler = function()
 {
 	Mojo.Log.info("## timer - Start button pressed!");
+	
+	//TODO: Need to re-establish timer from existing if user stop/started
 	var Hours = Number((this.controller.get("hour_field").innerText).trim()).padWithZeroes();
 	var Mins = Number((this.controller.get("minute_field").innerText).trim()).padWithZeroes();
 	var Seconds = Number((this.controller.get("second_field").innerText).trim()).padWithZeroes();
 	
-	Mojo.Controller.getAppController().showBanner("Countdown: "+ Hours + "H:" + Mins + "M:" + Seconds + "S", {source: 'notification'});
-	Mojo.Additions.DisableWidget("btnStop", false);
-	document.getElementById('runningSpinner').style.display = "block";
 	//Start timers
+	running = true;
+	timerCount = 0;
 	timerStartTime = Date.now();
 	timerDuration = ((Hours * 60) * 60) * 1000;
 	timerDuration += (Mins * 60) * 1000;
 	timerDuration += (Seconds * 1000);
 	Mojo.Log.info("## timer - timer set for " + timerDuration + " milliseconds");
-	this.incrementTimer();
+
+	//Set the timer value now, then repeatedly
+	this.incrementTimer(timerDuration);
 	timerInterval = setInterval(this.incrementTimer, 1000);
-	//Setup system alarm
+
+	this.setUIForRunning();
 	systemService.SetSystemAlarmRelative("JonsTimer", Hours + ":" + Mins + ":" + Seconds + ".00");
 	systemService.PlaySound("down2");
 }
 
-TimerAssistant.prototype.incrementTimer = function()
+TimerAssistant.prototype.incrementTimer = function(showTimerValue)
 {
 	//Increment timer
-	var stopwatchTimerOffset = Date.now() - timerStartTime;
-	var showTimerValue = timerDuration - stopwatchTimerOffset;
+	if (!showTimerValue)
+	{
+		timerCount++;
+		var stopwatchTimerOffset = timerCount * 1000;
+		var showTimerValue = timerDuration - stopwatchTimerOffset;
+		//Mojo.Log.info("Updating timer using offsetvalue value " + stopwatchTimerOffset + " for timer value " + showTimerValue);
+	}
+	else
+	{
+		//Mojo.Log.info("Updating timer using passed value " + showTimerValue);
+	}
 	if (showTimerValue < 1000)
 	{
 		clearInterval(timerInterval);
+		document.getElementById("timerViewFace").innerHTML = timerResetValue;
 	}
 	else
 	{
@@ -57,53 +73,96 @@ TimerAssistant.prototype.incrementTimer = function()
 
 TimerAssistant.prototype.timerDone = function()
 {
+	running = false;
 	clearInterval(timerInterval);
 	//Reset some things
-	this.SetPickerValue("hour_field", "0");
-	this.SetPickerValue("minute_field", "0");
-	this.SetPickerValue("second_field", "0");
-	document.getElementById("timerViewFace").innerHTML = timerResetValue;
-	document.getElementById('runningSpinner').style.display = "none";
-	Mojo.Additions.DisableWidget("btnStop", true);
-	Mojo.Additions.DisableWidget("btnStart", true);
-	
-	Mojo.Controller.getAppController().showBanner("Timer finished!", {source: 'notification'});
-	Mojo.Controller.getAppController().playSoundNotification('vibrate', "/media/internal/ringtones/Rain Dance.mp3", 5);
+	this.setUIForReset();
 	
 	//Clear system timer
 	systemService.ClearSystemAlarm("JonsTimer");
-	//figure out how to make a sound
-	Mojo.Controller.getAppController().showBanner("Timer finished!", {source: 'notification'});
-	//figure out how to vibrate
-	systemService.Vibrate(1000, 1000);
-	Mojo.Controller.getAppController().playSoundNotification('vibrate', "/media/internal/ringtones/Rain Dance.mp3", 5);
-	
-}
-
-TimerAssistant.prototype.btnResetHandler = function()
-{
-	Mojo.Log.info("## timer - reset button pressed!");
-	this.btnStopHandler();
-	Mojo.Additions.DisableWidget("btnStart", true);
-	this.controller.get("timerViewFace").innerHTML = timerResetValue;
-	this.SetPickerValue("hour_field", "0");
-	this.SetPickerValue("minute_field", "0");
-	this.SetPickerValue("second_field", "0");
-	document.getElementById('timerViewFace').style.display = "block";
-	document.getElementById('timerViewPicker').style.display = "none";
-	systemService.PlaySound("delete_01");
+	Mojo.Controller.getAppController().showBanner(
+		{
+			messageText: "Timer finished!",
+			soundClass: "alerts"
+		},
+		{source:'notification'}
+	);
+	Mojo.Controller.getAppController().playSoundNotification("media", "/media/internal/ringtones/Triangle.mp3", 2000);
+	systemService.Vibrate(2000, 3000);
 }
 
 TimerAssistant.prototype.btnStopHandler = function()
 {
 	Mojo.Log.info("## timer - stop button pressed!");
 	//Cancel timers
+	running = false;
 	clearInterval(timerInterval);
-	//Cancel system alarm
+	//TODO: Cancelling system timer doesn't seem to be working
+	systemService.ClearSystemAlarm("JonsTimer");
+	this.setUIForStopped();
+	systemService.PlaySound("down2");
+}
+
+TimerAssistant.prototype.btnResetHandler = function()
+{
+	Mojo.Log.info("## timer - reset button pressed!");
+	this.setUIForReset();
+	systemService.PlaySound("delete_01");
+}
+
+TimerAssistant.prototype.timerFaceTapped = function(event){
+	Mojo.Log.info("## timer - the watch face was tapped");
+	document.getElementById('timerViewFace').style.display = "none";
+	document.getElementById('timerViewPicker').style.display = "block";
+	Mojo.Log.error("## timer - visibility was toggled");
+}
+
+TimerAssistant.prototype.propertyChanged = function(event){
+	/* log the text field value when the value changes */
+	Mojo.Log.info("## timer - a field changed");
+	var Hours = (this.controller.get("hour_field").innerText).trim();
+	var Mins = (this.controller.get("minute_field").innerText).trim();
+	var Seconds = (this.controller.get("second_field").innerText).trim();
+
+	this.controller.get("timerViewFace").innerHTML = Hours + ":" + Mins + ":" + Seconds;
+	document.getElementById('timerViewFace').style.display = "block";
+	document.getElementById('timerViewPicker').style.display = "none";
+
+	if (Number(Seconds) > 0 || Number(Mins) > 0 || Number(Hours) > 0)
+	{
+		Mojo.Additions.DisableWidget("btnStart", false);
+	}
+}
+
+TimerAssistant.prototype.setUIForRunning = function ()
+{
+	Mojo.Additions.DisableWidget("btnStart", true);
+	Mojo.Additions.DisableWidget("btnReset", true);
+	Mojo.Additions.DisableWidget("btnStop", false);
+	document.getElementById('runningSpinner').style.display = "block";
+}
+
+TimerAssistant.prototype.setUIForStopped = function ()
+{
 	Mojo.Additions.DisableWidget("btnStart", false);
+	Mojo.Additions.DisableWidget("btnReset", false);
 	Mojo.Additions.DisableWidget("btnStop", true);
 	document.getElementById('runningSpinner').style.display = "none";
-	systemService.PlaySound("down2");
+}
+
+TimerAssistant.prototype.setUIForReset = function ()
+{
+	Mojo.Additions.DisableWidget("btnStart", true);
+	Mojo.Additions.DisableWidget("btnReset", false);
+	Mojo.Additions.DisableWidget("btnStop", true);
+	document.getElementById('runningSpinner').style.display = "none";
+	this.controller.get("timerViewFace").innerHTML = timerResetValue;
+	Mojo.Additions.SetPickerWidgetValue("hour_field", "0");
+	Mojo.Additions.SetPickerWidgetValue("minute_field", "0");
+	Mojo.Additions.SetPickerWidgetValue("second_field", "0");
+	document.getElementById('timerViewFace').style.display = "block";
+	document.getElementById('timerViewPicker').style.display = "none";
+	document.getElementById('runningSpinner').style.display = "none";
 }
 
 TimerAssistant.prototype.setup = function() {
@@ -207,13 +266,24 @@ TimerAssistant.prototype.setup = function() {
 TimerAssistant.prototype.activate = function(event) {
 	if (alarmLaunch)
 	{
-		Mojo.Log.info("timer scene launched because of alarm");
-		alarmLaunch = false;
-		this.timerDone();
+		if (running)
+		{
+			Mojo.Log.info("timer scene launched because of alarm");
+			alarmLaunch = false;
+			this.timerDone();
+		}
 	}
 	else
 	{
 		Mojo.Log.info("timer scene launched without an alarm");
+		if (running)
+		{
+			this.setUIForRunning();
+		}
+		else
+		{
+			this.setUIForReset();
+		}
 	}
 	/* put in event handlers here that should only be in effect when this scene is active. For
 	   example, key handlers that are observing the document */
@@ -225,8 +295,6 @@ TimerAssistant.prototype.activate = function(event) {
 	Mojo.Event.listen(this.controller.get('hour_field'), Mojo.Event.propertyChange, this.propertyChanged);
 	Mojo.Event.listen(this.controller.get('minute_field'), Mojo.Event.propertyChange, this.propertyChanged);
 	Mojo.Event.listen(this.controller.get('second_field'), Mojo.Event.propertyChange, this.propertyChanged);
-
-	
 };
 
 TimerAssistant.prototype.deactivate = function(event) {
@@ -245,39 +313,6 @@ TimerAssistant.prototype.cleanup = function(event) {
 	/* this function should do any cleanup needed before the scene is destroyed as 
 	   a result of being popped off the scene stack */
 };
-
-
-TimerAssistant.prototype.timerFaceTapped = function(event){
-	Mojo.Log.info("## timer - the watch face was tapped");
-	document.getElementById('timerViewFace').style.display = "none";
-	document.getElementById('timerViewPicker').style.display = "block";
-	Mojo.Log.error("## timer - visibility was toggled");
-}
-
-TimerAssistant.prototype.propertyChanged = function(event){
-	/* log the text field value when the value changes */
-	Mojo.Log.info("## timer - a field changed");
-	var Hours = (this.controller.get("hour_field").innerText).trim();
-	var Mins = (this.controller.get("minute_field").innerText).trim();
-	var Seconds = (this.controller.get("second_field").innerText).trim();
-
-	this.controller.get("timerViewFace").innerHTML = Hours + ":" + Mins + ":" + Seconds;
-	document.getElementById('timerViewFace').style.display = "block";
-	document.getElementById('timerViewPicker').style.display = "none";
-
-	if (Number(Seconds) > 0 || Number(Mins) > 0 || Number(Hours) > 0)
-	{
-		Mojo.Additions.DisableWidget("btnStart", false);
-	}
-	//this.showDialogBox("Integer changed", "The value of the Integer field is now: " + event.value);
-}
-
-TimerAssistant.prototype.SetPickerValue = function(widgetName, newvalue)
-{
-	var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
-	thisWidgetModel.value = newvalue;
-	this.controller.setWidgetModel(widgetName, thisWidgetModel);
-}
 
 //Helper functions
 Number.prototype.toLongTimeValue = function() {

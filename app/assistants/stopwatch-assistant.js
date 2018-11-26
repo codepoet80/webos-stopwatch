@@ -24,22 +24,24 @@ StopwatchAssistant.prototype.btnStartHandler = function()
 	stopWatchStartTime = Date.now();
 	lapStartTime = Date.now();
 	stopWatchTimerInterval = setInterval(this.incrementTimer, 100);
-	systemService.PreventDisplaySleep();
-	
-	//Update UI
-	this.SetWidgetLabel("btnLapReset", "Lap");
-	this.SetWidgetDisablement("btnStart", true);
-	this.SetWidgetDisablement("btnLapReset", false);
-	this.SetWidgetDisablement("btnStop", false);
+	this.setUIForRunning();
 	systemService.PlaySound("down2");
 }
 
 StopwatchAssistant.prototype.incrementTimer = function()
 {
 	//Increment timer
+	running = true;
 	var stopwatchTimerOffset = Date.now() - stopWatchStartTime;
 	var showTimerValue = stopWatchTimerValue + stopwatchTimerOffset;
-	document.getElementById("watchViewDetail").innerHTML = (showTimerValue / 100).toLongTimeValueMS();
+	try
+	{
+		document.getElementById("watchViewDetail").innerHTML = (showTimerValue / 100).toLongTimeValueMS();
+	}
+	catch (error)
+	{
+		//won't be able to update if the scene is not active, but that's ok
+	}
 }
 
 StopwatchAssistant.prototype.btnStopHandler = function()
@@ -56,14 +58,8 @@ StopwatchAssistant.prototype.btnStopHandler = function()
 	var lapTimerOffset = Date.now() - lapStartTime;
 	lapTimerValue = lapTimerValue + lapTimerOffset;;
 	this.addLapToList(lapCount+1, (lapTimerValue / 100));
-
-	//Update UI
-	this.SetWidgetLabel("btnLapReset", "Reset");
-	this.SetWidgetDisablement("btnStart", false);
-	this.SetWidgetDisablement("btnLapReset", false);
-	this.SetWidgetDisablement("btnStop", true);
+	this.setUIForStopped();
 	systemService.PlaySound("down2");
-	systemService.AllowDisplaySleep();
 }
 
 StopwatchAssistant.prototype.stopTimer = function()
@@ -104,7 +100,7 @@ StopwatchAssistant.prototype.btnLapResetHandler = function()
 		lapTimerValue=0;
 		lapCount = 0;
 		stopWatchTimerValue=timerStartValue;
-		this.SetWidgetDisablement("btnLapReset", true);
+		Mojo.Additions.DisableWidget("btnLapReset", true);
 
 		//Reset the timer
 		this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValueMS();
@@ -192,6 +188,26 @@ StopwatchAssistant.prototype.updateBestWorstLaps = function()
 	}
 }
 
+StopwatchAssistant.prototype.setUIForRunning = function()
+{
+	systemService.PreventDisplaySleep();
+	//Update Widgets
+	Mojo.Additions.SetWidgetLabel("btnLapReset", "Lap");
+	Mojo.Additions.DisableWidget("btnStart", true);
+	Mojo.Additions.DisableWidget("btnLapReset", false);
+	Mojo.Additions.DisableWidget("btnStop", false);
+}
+
+StopwatchAssistant.prototype.setUIForStopped = function()
+{
+	systemService.AllowDisplaySleep();
+	//Update UI
+	Mojo.Additions.SetWidgetLabel("btnLapReset", "Reset");
+	Mojo.Additions.DisableWidget("btnStart", false);
+	Mojo.Additions.DisableWidget("btnLapReset", false);
+	Mojo.Additions.DisableWidget("btnStop", true);
+}
+
 StopwatchAssistant.prototype.setup = function() {
 	Mojo.Log.info("Stopwatch scene started."); 
 	/* this function is for setup tasks that have to happen when the scene is first created */
@@ -233,41 +249,35 @@ StopwatchAssistant.prototype.setup = function() {
 	};
 	this.controller.setupWidget(Mojo.Menu.commandMenu, this.cmdMenuAttributes, this.cmdMenuModel);
 	Mojo.Log.info("Scene setup done."); 
-
-	/* app-level event handlers */
-	Mojo.Event.listen(this.controller.stageController.document,	Mojo.Event.stageDeactivate, this.appDeactivated);
-	Mojo.Event.listen(this.controller.stageController.document,	Mojo.Event.stageActivate, this.appActivated);
 };
-
-StopwatchAssistant.prototype.appActivated = function(event) {
-	Mojo.Log.info("App stage has been (re)activated at: " + Date.now());
-}
 
 StopwatchAssistant.prototype.activate = function(event) {
 	Mojo.Log.info("Stopwatch scene activated.");
 	/* put in event handlers here that should only be in effect when this scene is active. For
 	   example, key handlers that are observing the document */
-	stopWatchTimerValue = timerStartValue;
-	running=false;
-	lapCount = 0;
 	
 	Mojo.Event.listen(this.controller.get('btnStop'), Mojo.Event.tap, this.btnStopHandler);
 	Mojo.Event.listen(this.controller.get('btnLapReset'), Mojo.Event.tap, this.btnLapResetHandler);
 	Mojo.Event.listen(this.controller.get('btnStart'), Mojo.Event.tap, this.btnStartHandler);
 
-	if (running)
-		systemService.PreventDisplaySleep();
+	if (running)	//If we came back to this scene when the timer was already running
+	{
+		this.setUIForRunning();
+		//TODO: Need to re-draw lap rows too
+	}
+	else
+	{
+		this.setUIForStopped();
+		//Reset counters
+		stopWatchTimerValue = timerStartValue;
+		lapCount = 0;
+	}
 };
-
-StopwatchAssistant.prototype.appDeactivated = function(event) {
-	Mojo.Log.info("App stage has been deactivated at: " + Date.now());
-}
 
 StopwatchAssistant.prototype.deactivate = function(event) {
 	Mojo.Log.info("Stopwatch scene deactivated.");
 	/* remove any event handlers you added in activate and do any other cleanup that should happen before
 	   this scene is popped or another scene is pushed on top */
-	this.stopTimer();
 	
 	Mojo.Event.stopListening(this.controller.get('btnStop'),Mojo.Event.tap, this.btnStopHandler)
 	Mojo.Event.stopListening(this.controller.get('btnLapReset'),Mojo.Event.tap, this.btnLapResetHandler)
@@ -282,20 +292,6 @@ StopwatchAssistant.prototype.cleanup = function(event) {
 };
 
 //Helper functions
-StopwatchAssistant.prototype.SetWidgetDisablement = function(widgetName, newvalue)
-{
-	var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
-	thisWidgetModel.disabled = newvalue;
-	this.controller.setWidgetModel(widgetName, thisWidgetModel);
-}
-
-StopwatchAssistant.prototype.SetWidgetLabel = function(widgetName, newvalue)
-{
-	var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
-	thisWidgetModel.label = newvalue;
-	this.controller.setWidgetModel(widgetName, thisWidgetModel);
-}
-
 Number.prototype.toLongTimeValueMS = function() {
 	
 	//Calculate time segments

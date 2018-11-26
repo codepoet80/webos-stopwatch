@@ -15,6 +15,7 @@ StageAssistant.prototype.setup = function() {
 	};
 
 	this.controller.pushScene("stopwatch");
+	//this.controller.pushScene("timer");
 };
 
 StageAssistant.prototype.handleCommand = function(event) {
