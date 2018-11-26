@@ -24,14 +24,14 @@ StopwatchAssistant.prototype.btnStartHandler = function()
 	stopWatchStartTime = Date.now();
 	lapStartTime = Date.now();
 	stopWatchTimerInterval = setInterval(this.incrementTimer, 100);
-	this.PreventDisplaySleep();
+	systemService.PreventDisplaySleep();
 	
 	//Update UI
 	this.SetWidgetLabel("btnLapReset", "Lap");
 	this.SetWidgetDisablement("btnStart", true);
 	this.SetWidgetDisablement("btnLapReset", false);
 	this.SetWidgetDisablement("btnStop", false);
-	this.PlaySound("down2");
+	systemService.PlaySound("down2");
 }
 
 StopwatchAssistant.prototype.incrementTimer = function()
@@ -39,7 +39,7 @@ StopwatchAssistant.prototype.incrementTimer = function()
 	//Increment timer
 	var stopwatchTimerOffset = Date.now() - stopWatchStartTime;
 	var showTimerValue = stopWatchTimerValue + stopwatchTimerOffset;
-	document.getElementById("watchViewDetail").innerHTML = (showTimerValue / 100).toLongTimeValue();
+	document.getElementById("watchViewDetail").innerHTML = (showTimerValue / 100).toLongTimeValueMS();
 }
 
 StopwatchAssistant.prototype.btnStopHandler = function()
@@ -50,7 +50,7 @@ StopwatchAssistant.prototype.btnStopHandler = function()
 
 	//Update watch face
 	var	stoppedTime = Number(stopWatchTimerValue / 100);
-	document.getElementById("watchViewDetail").innerHTML = stoppedTime.toLongTimeValue();
+	document.getElementById("watchViewDetail").innerHTML = stoppedTime.toLongTimeValueMS();
 	
 	//Update laps
 	var lapTimerOffset = Date.now() - lapStartTime;
@@ -62,8 +62,8 @@ StopwatchAssistant.prototype.btnStopHandler = function()
 	this.SetWidgetDisablement("btnStart", false);
 	this.SetWidgetDisablement("btnLapReset", false);
 	this.SetWidgetDisablement("btnStop", true);
-	this.PlaySound("down2");
-	this.AllowDisplaySleep();
+	systemService.PlaySound("down2");
+	systemService.AllowDisplaySleep();
 }
 
 StopwatchAssistant.prototype.stopTimer = function()
@@ -91,7 +91,7 @@ StopwatchAssistant.prototype.btnLapResetHandler = function()
 		lapTimerOffset=0;
 		lapTimerValue=0;
 		lapCount++;
-		this.PlaySound("up2");
+		systemService.PlaySound("up2");
 	}
 	else	//Reset Button
 	{
@@ -107,10 +107,10 @@ StopwatchAssistant.prototype.btnLapResetHandler = function()
 		this.SetWidgetDisablement("btnLapReset", true);
 
 		//Reset the timer
-		this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValue();
+		this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValueMS();
 		this.controller.get("watchLapTimes").innerHTML = "";
 		this.controller.get("watchLapPlaceholder").innerHTML = lapDivEmptyHTML + lapDivEmptyHTML;
-		this.PlaySound("delete_01");
+		systemService.PlaySound("delete_01");
 	}
 }
 
@@ -130,7 +130,7 @@ StopwatchAssistant.prototype.addLapToList = function(showLap, timerValue)
 			{
 				var currColumn = countColumn[j];
 				currColumn.title = timerValue.toString();
-				currColumn.innerHTML = Number(timerValue).toLongTimeValue();
+				currColumn.innerHTML = Number(timerValue).toLongTimeValueMS();
 			}
 		}
 	}
@@ -140,7 +140,7 @@ StopwatchAssistant.prototype.addLapToList = function(showLap, timerValue)
 		Mojo.Log.info("Creating new lap row " + showLap + " with time " + timerValue);
 		var newLap = "<table class='watchLap' id='Lap" + showLap + "'><tr><td class='leftLap'>Lap " + 
 			showLap + "</td><td class='rightLap' title='" + timerValue.toString() + "'>" + 
-			Number(timerValue).toLongTimeValue() + "</td></tr></table>";
+			Number(timerValue).toLongTimeValueMS() + "</td></tr></table>";
 		this.controller.get("watchLapTimes").innerHTML = newLap + this.controller.get("watchLapTimes").innerHTML;
 	}
 	//Add placeholder rows if needed
@@ -198,7 +198,7 @@ StopwatchAssistant.prototype.setup = function() {
 	
 	/* setup widgets here */
 	this.controller.get("watchViewTitle").innerHTML = "Stopwatch";
-	this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValue();
+	this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValueMS();
 	this.controller.get("watchLapTimes").innerHTML = "";
 	this.controller.get("watchLapPlaceholder").innerHTML = lapDivEmptyHTML + lapDivEmptyHTML;
 
@@ -256,7 +256,7 @@ StopwatchAssistant.prototype.activate = function(event) {
 	Mojo.Event.listen(this.controller.get('btnStart'), Mojo.Event.tap, this.btnStartHandler);
 
 	if (running)
-		this.PreventDisplaySleep();
+		systemService.PreventDisplaySleep();
 };
 
 StopwatchAssistant.prototype.appDeactivated = function(event) {
@@ -272,36 +272,14 @@ StopwatchAssistant.prototype.deactivate = function(event) {
 	Mojo.Event.stopListening(this.controller.get('btnStop'),Mojo.Event.tap, this.btnStopHandler)
 	Mojo.Event.stopListening(this.controller.get('btnLapReset'),Mojo.Event.tap, this.btnLapResetHandler)
 	Mojo.Event.stopListening(this.controller.get('btnStart'),Mojo.Event.tap, this.btnStartHandler)
-	this.AllowDisplaySleep();
+	systemService.AllowDisplaySleep();
 };
 
 StopwatchAssistant.prototype.cleanup = function(event) {
 	/* this function should do any cleanup needed before the scene is destroyed as 
 	   a result of being popped off the scene stack */
-	this.AllowDisplaySleep();
+	systemService.AllowDisplaySleep();
 };
-
-
-//Power management
-StopwatchAssistant.prototype.PreventDisplaySleep = function ()
-{
-	//Ask the System to stay awake while timer is running
-	Mojo.Log.info("preventing display sleep");
-
-	this.controller.stageController.setWindowProperties({
-		blockScreenTimeout: true
-	});
-}
-
-StopwatchAssistant.prototype.AllowDisplaySleep = function ()
-{
-	//Tell the System it doesn't have to stay awake any more
-	Mojo.Log.info("allowing display sleep");
-
-	this.controller.stageController.setWindowProperties({
-		blockScreenTimeout: false
-	});
-}
 
 //Helper functions
 StopwatchAssistant.prototype.SetWidgetDisablement = function(widgetName, newvalue)
@@ -318,19 +296,7 @@ StopwatchAssistant.prototype.SetWidgetLabel = function(widgetName, newvalue)
 	this.controller.setWidgetModel(widgetName, thisWidgetModel);
 }
 
-StopwatchAssistant.prototype.PlaySound = function(soundName)
-{
-	this.controller.serviceRequest("palm://com.palm.audio/systemsounds", {
-		method: "playFeedback",
-		parameters: {
-			name: soundName
-		},
-		onSuccess:{},
-		onFailure:{}
-	});
-}
-
-Number.prototype.toLongTimeValue = function() {
+Number.prototype.toLongTimeValueMS = function() {
 	
 	//Calculate time segments
 	var milliseconds = this * 100;

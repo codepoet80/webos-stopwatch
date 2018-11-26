@@ -1,17 +1,16 @@
-var systemService = null;
 function StageAssistant() {
 	/* this is the creator function for your stage assistant object */
-	Mojo.Additions = Additions;
-	systemService = new SystemService();
 }
 
 StageAssistant.prototype.setup = function() {
 
 	/* this function is for setup tasks that have to happen when the stage is first created */
-	StageController = Mojo.Controller.stageController;
+	//Bind local members
+	var stageController = Mojo.Controller.stageController;
+	stageController.launchWithAlarm = this.launchWithAlarm;
 
 	//Setup App Menu
-	StageController.appMenuModel = {
+	stageController.appMenuModel = {
 		items: [{label: "About Stopwatch", command: 'do-myAbout'}]
 	};
 
@@ -20,7 +19,7 @@ StageAssistant.prototype.setup = function() {
 
 StageAssistant.prototype.handleCommand = function(event) {
 	this.controller=Mojo.Controller.stageController.activeScene();
-	StageController = Mojo.Controller.stageController;
+	stageController = Mojo.Controller.stageController;
 
 	if(event.type == Mojo.Event.command) {
 		switch(event.command) {
@@ -39,7 +38,7 @@ StageAssistant.prototype.handleCommand = function(event) {
 			{
 				if (this.controller.sceneName != "timer")
 				{
-					StageController.swapScene("timer");
+					stageController.swapScene("timer");
 				}
 				break;	
 			}
@@ -48,7 +47,7 @@ StageAssistant.prototype.handleCommand = function(event) {
 			{
 				if (this.controller.sceneName != "stopwatch")
 					{
-						StageController.swapScene("stopwatch");
+						stageController.swapScene("stopwatch");
 					}
 				break;
 			}
@@ -56,3 +55,20 @@ StageAssistant.prototype.handleCommand = function(event) {
 	}
 	Mojo.Log.info("current scene: " + this.controller.sceneName);
 }; 
+
+StageAssistant.prototype.launchWithAlarm = function()
+{
+	var stageController = Mojo.Controller.stageController;
+	this.controller = stageController.activeScene();
+
+	if (stageController.topScene().sceneName == "timer")
+	{
+		Mojo.Log.info("timer scene is active, need to call its timerDone function");
+		this.controller.activate();
+	}
+	else
+	{
+		Mojo.Log.info("timer scene is not active, push it to the top, which will call its timerDone function");
+		stageController.pushScene("timer");
+	}
+}
