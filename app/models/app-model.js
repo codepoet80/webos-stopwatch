@@ -1,3 +1,12 @@
+/*
+AppModel Model
+ Version 0.2
+ Created: 2018
+ Author: Jonathan Wise
+ License: MIT
+ Description: Common functions for webOS apps, particularly for managing persisted options in cookies
+*/
+
 var AppModel = function()
 {
     //Define your app-wide static settings here
