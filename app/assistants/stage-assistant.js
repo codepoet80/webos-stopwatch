@@ -7,13 +7,14 @@ StageAssistant.prototype.setup = function() {
 	/* this function is for setup tasks that have to happen when the stage is first created */
 	//Bind local members
 	var stageController = Mojo.Controller.stageController;
+	appModel.LoadSettings();
 
 	//Setup App Menu
 	stageController.appMenuModel = {
 		items: [{label: "About Stopwatch", command: 'do-myAbout'}]
 	};
 
-	if (alarmLaunch)
+	if (appModel.AlarmLaunch)
 	{
 		Mojo.Log.error("stage setting up an alarm launch");
 		stageController.pushScene("timer");
@@ -21,7 +22,7 @@ StageAssistant.prototype.setup = function() {
 	else
 	{
 		Mojo.Log.error("stage setting up a normal launch");
-		stageController.pushScene("stopwatch");
+		stageController.pushScene(appModel.DefaultScene);
 	}
 };
 

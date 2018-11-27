@@ -75,10 +75,11 @@ TimerAssistant.prototype.incrementTimer = function(showTimerValue)
 
 TimerAssistant.prototype.timerDone = function()
 {
-	Mojo.Controller.stageController.indicateNewContent(true);	//TODO: Make this work
 	Mojo.Controller.getAppController().showBanner("Timer done!", {source:'notification'});
-	Mojo.Controller.getAppController().playSoundNotification("media", "/media/internal/ringtones/Triangle.mp3", 2000);
-	systemService.Vibrate(2000, 3000);
+	if (appModel.AppSettingsCurrent["SoundEnabled"] == "true")
+		systemService.PlaySound("alert_buzz");
+	if (appModel.AppSettingsCurrent["VibeEnabled"] == "true")
+		Mojo.Controller.getAppController().playSoundNotification("vibrate");
 	running = false;
 	clearInterval(timerInterval);
 
@@ -92,7 +93,6 @@ TimerAssistant.prototype.btnStopHandler = function()
 	//Cancel timers
 	running = false;
 	clearInterval(timerInterval);
-	//TODO: Cancelling system timer doesn't seem to be working
 	systemService.ClearSystemAlarm("JonsTimer");
 	this.setUIForReset();
 	systemService.PlaySound("delete_01");
@@ -163,8 +163,8 @@ TimerAssistant.prototype.setup = function() {
 	this.btnStartHandler = this.btnStartHandler.bind(this);
 	this.controller.setupWidget('btnStart', this.attributes={}, this.model={label:"Start", buttonClass: 'palm-button affirmative buttonfloat', disabled: true});
 
-	this.setupToggle('Sound', null);
-	this.setupToggle('Vibe', null);
+	this.setupToggle('Sound');
+	this.setupToggle('Vibe');
 
 	this.propertyChanged = this.propertyChanged.bind(this);
 	this.controller.setupWidget("hour_field",
@@ -247,11 +247,11 @@ TimerAssistant.prototype.setup = function() {
 };
 
 TimerAssistant.prototype.activate = function(event) {
-	Mojo.Log.error("*** timer scene activated. alarm launch? " + alarmLaunch);
-	if (alarmLaunch)
+	Mojo.Log.error("*** timer scene activated. alarm launch? " + appModel.AlarmLaunch);
+	if (appModel.AlarmLaunch)
 	{
 		Mojo.Log.error("*** timer scene activated because of alarm");
-		alarmLaunch = false;
+		appModel.AlarmLaunch = false;
 		this.timerDone();
 		//Reset some things
 	}
@@ -281,8 +281,8 @@ TimerAssistant.prototype.activate = function(event) {
 	Mojo.Event.listen(this.controller.get('minute_field'), Mojo.Event.propertyChange, this.propertyChanged);
 	Mojo.Event.listen(this.controller.get('second_field'), Mojo.Event.propertyChange, this.propertyChanged);
 
-	Mojo.Additions.SetToggleState("att-toggle-Sound", true);
-	Mojo.Additions.SetToggleState("att-toggle-Vibe", true);
+	Mojo.Additions.SetToggleState("att-toggle-Sound", appModel.AppSettingsCurrent["SoundEnabled"]);
+	Mojo.Additions.SetToggleState("att-toggle-Vibe", appModel.AppSettingsCurrent["VibeEnabled"]);
 };
 
 TimerAssistant.prototype.deactivate = function(event) {
@@ -301,7 +301,7 @@ TimerAssistant.prototype.cleanup = function(event) {
 	   a result of being popped off the scene stack */
 };
 
-TimerAssistant.prototype.setupToggle = function (toggleName, settings)
+TimerAssistant.prototype.setupToggle = function (toggleName)
 {
 	this.attribute = {
 		trueLabel:  'on',
@@ -311,9 +311,8 @@ TimerAssistant.prototype.setupToggle = function (toggleName, settings)
 		fieldName:  'toggle'
 	}
 	this.model = {
-		//value : settings[toggleName + "Enabled"],
-		value: true,
-		disabled: true 
+		value : false,
+		disabled: false 
 	}
 	this.controller.setupWidget('att-toggle-' + toggleName, this.attribute, this.model);
 
@@ -322,21 +321,12 @@ TimerAssistant.prototype.setupToggle = function (toggleName, settings)
 }
 
 TimerAssistant.prototype.togglePressed = function(event){
-	/*var findSettingName = event.srcElement.id.replace("att-toggle-", "");
+	var findSettingName = event.srcElement.id.replace("att-toggle-", "");
 	findSettingName = findSettingName;
 
 	appModel.AppSettingsCurrent[findSettingName + "Enabled"] = event.value.toString();
 	appModel.SaveSettings();
 	Mojo.Log.error("**** Settings when toggle pressed: " + JSON.stringify(appModel.AppSettingsCurrent));
-
-	var newTime = Mojo.Controller.stageController.manageAlarm(findSettingName, appModel.AppSettingsCurrent[findSettingName + "Start"], appModel.AppSettingsCurrent[findSettingName + "Enabled"]);
-	if (newTime != false)
-	{
-		if (newTime != true)
-		{
-			Mojo.Controller.getAppController().showBanner(newTime, {source: 'notification'});
-		}
-	}*/
 }
 
 //Helper functions

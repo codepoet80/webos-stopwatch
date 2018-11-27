@@ -1,8 +1,8 @@
-var alarmLaunch = null;
 var systemService = null;
+var appModel = null;
 function AppAssistant(appController) {
-    systemService = new SystemService();
-    alarmLaunch = true;
+	appModel = new AppModel();
+	systemService = new SystemService();
 	Mojo.Additions = Additions;
 }
 
@@ -13,13 +13,13 @@ AppAssistant.prototype.handleLaunch = function(params) {
 	if (!params || params["action"] == undefined)	//If no parameters were passed, this is a normal launch
 	{	
 		Mojo.Log.error("This is a normal launch");
-		alarmLaunch = false;
+		appModel.AlarmLaunch = false;
 		return;
 	}
     else	//If parameters were passed, this is a launch from a system alarm
     {
 		Mojo.Log.error("This is a re-launch with parameters: " + JSON.stringify(params));
-		alarmLaunch = true;
+		appModel.AlarmLaunch = true;
 
 		//get the proxy for the stage in the event it already exists (eg: app is currently open)
 		var mainStage = this.controller.getStageProxy("");
