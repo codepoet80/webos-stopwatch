@@ -3,8 +3,8 @@ body{
     color: white;
 }
 .watchFace {
-    height: 80vh;
-    margin-top: 84px;
+    height: 80px;
+    margin-top: 90px;
     margin-bottom: 24px;
     font-family: "Lucida Console", Monaco, monospace;
     font-stretch: expanded;
@@ -12,7 +12,7 @@ body{
     text-align: center;
 }
 .timerFace {
-    height: 80vh;
+    height: 80px;
     margin-top: 90px;
     margin-bottom: 24px;
     font-family: "Lucida Console", Monaco, monospace;
@@ -21,9 +21,9 @@ body{
     text-align: center;
 }
 .timerPicker {
-    height: 80vh;
-    margin-top: 67px;
-    margin-bottom: 12px;
+    height: 80px;
+    margin-top: 90px;
+    margin-bottom: 24px;
     text-align: center;
 }
 .watchButtons {

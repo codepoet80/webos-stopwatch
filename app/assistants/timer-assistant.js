@@ -10,6 +10,7 @@ var timerInterval;
 var timerStartTime;
 var timerDuration;
 var timerCount;
+var timerCurrentValue;	//do i need this?
 var timerResetValue = "00:00:00";
 
 TimerAssistant.prototype.btnStartHandler = function()
@@ -53,42 +54,36 @@ TimerAssistant.prototype.incrementTimer = function(showTimerValue)
 	{
 		//Mojo.Log.info("Updating timer using passed value " + showTimerValue);
 	}
-	if (showTimerValue < 1000)
+	try
 	{
-		clearInterval(timerInterval);
-		document.getElementById("timerViewFace").innerHTML = timerResetValue;
-	}
-	else
-	{
-		try
+		if (showTimerValue < 1000)
+		{
+			clearInterval(timerInterval);
+			document.getElementById("timerViewFace").innerHTML = timerResetValue;
+		}
+		else
 		{
 			document.getElementById("timerViewFace").innerHTML = showTimerValue.toLongTimeValue();
+			document.getElementById('runningSpinner').style.display = "block";
 		}
-		catch(error)
-		{
-			//won't be able to update if the scene is not active, but that's ok
-		}
+	}
+	catch(error)
+	{
+		//won't be able to update if the scene is not active, but that's ok
 	}
 }
 
 TimerAssistant.prototype.timerDone = function()
 {
-	running = false;
-	clearInterval(timerInterval);
-	//Reset some things
-	this.setUIForReset();
-	
-	//Clear system timer
-	systemService.ClearSystemAlarm("JonsTimer");
-	Mojo.Controller.getAppController().showBanner(
-		{
-			messageText: "Timer finished!",
-			soundClass: "alerts"
-		},
-		{source:'notification'}
-	);
+	Mojo.Controller.stageController.indicateNewContent(true);	//TODO: Make this work
+	Mojo.Controller.getAppController().showBanner("Timer done!", {source:'notification'});
 	Mojo.Controller.getAppController().playSoundNotification("media", "/media/internal/ringtones/Triangle.mp3", 2000);
 	systemService.Vibrate(2000, 3000);
+	running = false;
+	clearInterval(timerInterval);
+
+	//Clear system timer
+	systemService.ClearSystemAlarm("JonsTimer");
 }
 
 TimerAssistant.prototype.btnStopHandler = function()
@@ -99,13 +94,6 @@ TimerAssistant.prototype.btnStopHandler = function()
 	clearInterval(timerInterval);
 	//TODO: Cancelling system timer doesn't seem to be working
 	systemService.ClearSystemAlarm("JonsTimer");
-	this.setUIForStopped();
-	systemService.PlaySound("down2");
-}
-
-TimerAssistant.prototype.btnResetHandler = function()
-{
-	Mojo.Log.info("## timer - reset button pressed!");
 	this.setUIForReset();
 	systemService.PlaySound("delete_01");
 }
@@ -137,7 +125,6 @@ TimerAssistant.prototype.propertyChanged = function(event){
 TimerAssistant.prototype.setUIForRunning = function ()
 {
 	Mojo.Additions.DisableWidget("btnStart", true);
-	Mojo.Additions.DisableWidget("btnReset", true);
 	Mojo.Additions.DisableWidget("btnStop", false);
 	document.getElementById('runningSpinner').style.display = "block";
 }
@@ -145,7 +132,6 @@ TimerAssistant.prototype.setUIForRunning = function ()
 TimerAssistant.prototype.setUIForStopped = function ()
 {
 	Mojo.Additions.DisableWidget("btnStart", false);
-	Mojo.Additions.DisableWidget("btnReset", false);
 	Mojo.Additions.DisableWidget("btnStop", true);
 	document.getElementById('runningSpinner').style.display = "none";
 }
@@ -153,7 +139,6 @@ TimerAssistant.prototype.setUIForStopped = function ()
 TimerAssistant.prototype.setUIForReset = function ()
 {
 	Mojo.Additions.DisableWidget("btnStart", true);
-	Mojo.Additions.DisableWidget("btnReset", false);
 	Mojo.Additions.DisableWidget("btnStop", true);
 	document.getElementById('runningSpinner').style.display = "none";
 	this.controller.get("timerViewFace").innerHTML = timerResetValue;
@@ -176,11 +161,11 @@ TimerAssistant.prototype.setup = function() {
 	this.btnStopHandler = this.btnStopHandler.bind(this);
 	this.controller.setupWidget('btnStop', this.attributes={}, this.model={label:"Stop", buttonClass: 'palm-button negative buttonfloat', disabled: true});
 
-	this.btnResetHandler = this.btnResetHandler.bind(this);
-	this.controller.setupWidget('btnReset', this.attributes={}, this.model={label:"Reset", buttonClass: 'palm-button buttonfloat', disabled: false});
-
 	this.btnStartHandler = this.btnStartHandler.bind(this);
 	this.controller.setupWidget('btnStart', this.attributes={}, this.model={label:"Start", buttonClass: 'palm-button affirmative buttonfloat', disabled: true});
+
+	this.setupToggle('Sound', null);
+	this.setupToggle('Vibe', null);
 
 	this.propertyChanged = this.propertyChanged.bind(this);
 	this.controller.setupWidget("hour_field",
@@ -264,32 +249,36 @@ TimerAssistant.prototype.setup = function() {
 };
 
 TimerAssistant.prototype.activate = function(event) {
+	Mojo.Log.error("*** timer scene activated. alarm launch? " + alarmLaunch);
 	if (alarmLaunch)
 	{
-		if (running)
-		{
-			Mojo.Log.info("timer scene launched because of alarm");
-			alarmLaunch = false;
-			this.timerDone();
-		}
+		Mojo.Log.error("*** timer scene activated because of alarm");
+		alarmLaunch = false;
+		this.timerDone();
+		//Reset some things
 	}
 	else
 	{
-		Mojo.Log.info("timer scene launched without an alarm");
+		Mojo.Log.error("*** timer scene launched without an alarm");
 		if (running)
 		{
+			Mojo.Log.error("*** timer was running");
 			this.setUIForRunning();
 		}
 		else
 		{
+			Mojo.Log.error("*** timer was not running");
 			this.setUIForReset();
 		}
 	}
+	//Set widget settings that can't be done during setup
+	document.getElementById('runningSpinner').style.display = "none";
+	Mojo.Additions.SetToggleState("att-toggle-Sound", true);
+	Mojo.Additions.SetToggleState("att-toggle-Vibe", true);
+	
 	/* put in event handlers here that should only be in effect when this scene is active. For
 	   example, key handlers that are observing the document */
-	document.getElementById('runningSpinner').style.display = "none";
-	Mojo.Event.listen(this.controller.get('btnStop'), Mojo.Event.tap, this.btnStopHandler);
-	Mojo.Event.listen(this.controller.get('btnReset'), Mojo.Event.tap, this.btnResetHandler);
+	Mojo.Event.listen(this.controller.get('btnStop'), Mojo.Event.tap, this.btnStopHandler);;
 	Mojo.Event.listen(this.controller.get('btnStart'), Mojo.Event.tap, this.btnStartHandler);
 	Mojo.Event.listen(this.controller.get('timerViewFace'), Mojo.Event.tap, this.timerFaceTapped);
 	Mojo.Event.listen(this.controller.get('hour_field'), Mojo.Event.propertyChange, this.propertyChanged);
@@ -300,9 +289,8 @@ TimerAssistant.prototype.activate = function(event) {
 TimerAssistant.prototype.deactivate = function(event) {
 	/* remove any event handlers you added in activate and do any other cleanup that should happen before
 	   this scene is popped or another scene is pushed on top */
-	Mojo.Event.stopListening(this.controller.get('btnStop'),Mojo.Event.tap, this.btnStopHandler)
-	Mojo.Event.stopListening(this.controller.get('btnReset'),Mojo.Event.tap, this.btnResetHandler)
-	Mojo.Event.stopListening(this.controller.get('btnStart'),Mojo.Event.tap, this.btnStartHandler)
+	Mojo.Event.stopListening(this.controller.get('btnStop'),Mojo.Event.tap, this.btnStopHandler);
+	Mojo.Event.stopListening(this.controller.get('btnStart'),Mojo.Event.tap, this.btnStartHandler);
 	Mojo.Event.stopListening(this.controller.get('timerViewFace'), Mojo.Event.tap, this.timerFaceTapped);
 	Mojo.Event.stopListening(this.controller.get('hour_field'), Mojo.Event.propertyChange, this.propertyChanged);
 	Mojo.Event.stopListening(this.controller.get('minute_field'), Mojo.Event.propertyChange, this.propertyChanged);
@@ -313,6 +301,44 @@ TimerAssistant.prototype.cleanup = function(event) {
 	/* this function should do any cleanup needed before the scene is destroyed as 
 	   a result of being popped off the scene stack */
 };
+
+TimerAssistant.prototype.setupToggle = function (toggleName, settings)
+{
+	this.attribute = {
+		trueLabel:  'on',
+		trueValue:  'true',
+		falseLabel:  'off',
+		falseValue: 'false',
+		fieldName:  'toggle'
+	}
+	this.model = {
+		//value : settings[toggleName + "Enabled"],
+		value: true,
+		disabled: true 
+	}
+	this.controller.setupWidget('att-toggle-' + toggleName, this.attribute, this.model);
+
+	this.togglePressed = this.togglePressed.bind(this);
+	Mojo.Event.listen(this.controller.get('att-toggle-' + toggleName), Mojo.Event.propertyChange, this.togglePressed);
+}
+
+TimerAssistant.prototype.togglePressed = function(event){
+	/*var findSettingName = event.srcElement.id.replace("att-toggle-", "");
+	findSettingName = findSettingName;
+
+	appModel.AppSettingsCurrent[findSettingName + "Enabled"] = event.value.toString();
+	appModel.SaveSettings();
+	Mojo.Log.error("**** Settings when toggle pressed: " + JSON.stringify(appModel.AppSettingsCurrent));
+
+	var newTime = Mojo.Controller.stageController.manageAlarm(findSettingName, appModel.AppSettingsCurrent[findSettingName + "Start"], appModel.AppSettingsCurrent[findSettingName + "Enabled"]);
+	if (newTime != false)
+	{
+		if (newTime != true)
+		{
+			Mojo.Controller.getAppController().showBanner(newTime, {source: 'notification'});
+		}
+	}*/
+}
 
 //Helper functions
 Number.prototype.toLongTimeValue = function() {

@@ -7,25 +7,32 @@ StageAssistant.prototype.setup = function() {
 	/* this function is for setup tasks that have to happen when the stage is first created */
 	//Bind local members
 	var stageController = Mojo.Controller.stageController;
-	stageController.launchWithAlarm = this.launchWithAlarm;
 
 	//Setup App Menu
 	stageController.appMenuModel = {
 		items: [{label: "About Stopwatch", command: 'do-myAbout'}]
 	};
 
-	this.controller.pushScene("stopwatch");
-	//this.controller.pushScene("timer");
+	if (alarmLaunch)
+	{
+		Mojo.Log.error("stage setting up an alarm launch");
+		stageController.pushScene("timer");
+	}
+	else
+	{
+		Mojo.Log.error("stage setting up a normal launch");
+		stageController.pushScene("stopwatch");
+	}
 };
 
 StageAssistant.prototype.handleCommand = function(event) {
-	this.controller=Mojo.Controller.stageController.activeScene();
-	stageController = Mojo.Controller.stageController;
+	var sceneController = Mojo.Controller.stageController.activeScene();
+	var stageController = Mojo.Controller.stageController;
 
 	if(event.type == Mojo.Event.command) {
 		switch(event.command) {
 			case 'do-myAbout':
-				this.controller.showAlertDialog({
+			sceneController.showAlertDialog({
 					onChoose: function(value) {},
 					title: $L("Stopwatch"),
 					message: $L("Copyright 2018, Jonathan Wise. Available under an MIT License. Source code available at: https://github.com/codepoet80/webos-stopwatch"),
@@ -37,39 +44,30 @@ StageAssistant.prototype.handleCommand = function(event) {
 
 			case 'do-Timer':
 			{
-				if (this.controller.sceneName != "timer")
+				if (sceneController.sceneName != "timer")
 				{
-					stageController.swapScene("timer");
+					stageController.swapScene(
+						{
+							transition: Mojo.Transition.crossFade,
+							name: "timer"
+						});
 				}
 				break;	
 			}
 
 			case 'do-Stopwatch':
 			{
-				if (this.controller.sceneName != "stopwatch")
+				if (sceneController.sceneName != "stopwatch")
 					{
-						stageController.swapScene("stopwatch");
+						stageController.swapScene(
+							{
+								transition: Mojo.Transition.crossFade,
+								name: "stopwatch"
+							});
 					}
 				break;
 			}
 		}
 	}
-	Mojo.Log.info("current scene: " + this.controller.sceneName);
+	Mojo.Log.info("current scene: " + sceneController.sceneName);
 }; 
-
-StageAssistant.prototype.launchWithAlarm = function()
-{
-	var stageController = Mojo.Controller.stageController;
-	this.controller = stageController.activeScene();
-
-	if (stageController.topScene().sceneName == "timer")
-	{
-		Mojo.Log.info("timer scene is active, need to call its timerDone function");
-		this.controller.activate();
-	}
-	else
-	{
-		Mojo.Log.info("timer scene is not active, push it to the top, which will call its timerDone function");
-		stageController.pushScene("timer");
-	}
-}
