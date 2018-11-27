@@ -140,7 +140,6 @@ TimerAssistant.prototype.setUIForReset = function ()
 {
 	Mojo.Additions.DisableWidget("btnStart", true);
 	Mojo.Additions.DisableWidget("btnStop", true);
-	document.getElementById('runningSpinner').style.display = "none";
 	this.controller.get("timerViewFace").innerHTML = timerResetValue;
 	Mojo.Additions.SetPickerWidgetValue("hour_field", "0");
 	Mojo.Additions.SetPickerWidgetValue("minute_field", "0");
@@ -242,7 +241,6 @@ TimerAssistant.prototype.setup = function() {
 	this.controller.setupWidget(Mojo.Menu.commandMenu, this.cmdMenuAttributes, this.cmdMenuModel);
 	
 	Mojo.Log.info("## timer - scene setup done."); 
-
 	/* app-level event handlers */
 	//Mojo.Event.listen(this.controller.stageController.document, Mojo.Event.stageDeactivate, this.appDeactivated);
 	//Mojo.Event.listen(this.controller.stageController.document, Mojo.Event.stageActivate, this.appActivated);
@@ -273,8 +271,6 @@ TimerAssistant.prototype.activate = function(event) {
 	}
 	//Set widget settings that can't be done during setup
 	document.getElementById('runningSpinner').style.display = "none";
-	Mojo.Additions.SetToggleState("att-toggle-Sound", true);
-	Mojo.Additions.SetToggleState("att-toggle-Vibe", true);
 	
 	/* put in event handlers here that should only be in effect when this scene is active. For
 	   example, key handlers that are observing the document */
@@ -284,6 +280,9 @@ TimerAssistant.prototype.activate = function(event) {
 	Mojo.Event.listen(this.controller.get('hour_field'), Mojo.Event.propertyChange, this.propertyChanged);
 	Mojo.Event.listen(this.controller.get('minute_field'), Mojo.Event.propertyChange, this.propertyChanged);
 	Mojo.Event.listen(this.controller.get('second_field'), Mojo.Event.propertyChange, this.propertyChanged);
+
+	Mojo.Additions.SetToggleState("att-toggle-Sound", true);
+	Mojo.Additions.SetToggleState("att-toggle-Vibe", true);
 };
 
 TimerAssistant.prototype.deactivate = function(event) {
