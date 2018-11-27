@@ -1,6 +1,6 @@
 /*
 SystemService Model
- Version 0.2
+ Version 0.2a
  Created: 2018
  Author: Jonathan Wise
  License: MIT
