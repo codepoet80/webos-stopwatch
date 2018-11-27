@@ -36,8 +36,8 @@ TimerAssistant.prototype.btnStartHandler = function()
 	timerInterval = setInterval(this.incrementTimer, 1000);
 
 	this.setUIForRunning();
-	systemService.SetSystemAlarmRelative("JonsTimer", Hours + ":" + Mins + ":" + Seconds + ".00");
-	systemService.PlaySound("down2");
+	systemModel.SetSystemAlarmRelative("JonsTimer", Hours + ":" + Mins + ":" + Seconds + ".00");
+	systemModel.PlaySound("down2");
 }
 
 TimerAssistant.prototype.incrementTimer = function(showTimerValue)
@@ -77,14 +77,14 @@ TimerAssistant.prototype.timerDone = function()
 {
 	Mojo.Controller.getAppController().showBanner("Timer done!", {source:'notification'});
 	if (appModel.AppSettingsCurrent["SoundEnabled"] == "true")
-		systemService.PlaySound("alert_buzz");
+		systemModel.PlaySound("alert_buzz");
 	if (appModel.AppSettingsCurrent["VibeEnabled"] == "true")
 		Mojo.Controller.getAppController().playSoundNotification("vibrate");
 	running = false;
 	clearInterval(timerInterval);
 
 	//Clear system timer
-	systemService.ClearSystemAlarm("JonsTimer");
+	systemModel.ClearSystemAlarm("JonsTimer");
 }
 
 TimerAssistant.prototype.btnStopHandler = function()
@@ -93,9 +93,9 @@ TimerAssistant.prototype.btnStopHandler = function()
 	//Cancel timers
 	running = false;
 	clearInterval(timerInterval);
-	systemService.ClearSystemAlarm("JonsTimer");
+	systemModel.ClearSystemAlarm("JonsTimer");
 	this.setUIForReset();
-	systemService.PlaySound("delete_01");
+	systemModel.PlaySound("delete_01");
 }
 
 TimerAssistant.prototype.timerFaceTapped = function(event){

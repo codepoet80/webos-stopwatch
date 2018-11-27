@@ -25,7 +25,7 @@ StopwatchAssistant.prototype.btnStartHandler = function()
 	lapStartTime = Date.now();
 	stopWatchTimerInterval = setInterval(this.incrementTimer, 100);
 	this.setUIForRunning();
-	systemService.PlaySound("down2");
+	systemModel.PlaySound("down2");
 }
 
 StopwatchAssistant.prototype.incrementTimer = function()
@@ -59,7 +59,7 @@ StopwatchAssistant.prototype.btnStopHandler = function()
 	lapTimerValue = lapTimerValue + lapTimerOffset;;
 	this.addLapToList(lapCount+1, (lapTimerValue / 100));
 	this.setUIForStopped();
-	systemService.PlaySound("down2");
+	systemModel.PlaySound("down2");
 }
 
 StopwatchAssistant.prototype.stopTimer = function()
@@ -87,7 +87,7 @@ StopwatchAssistant.prototype.btnLapResetHandler = function()
 		lapTimerOffset=0;
 		lapTimerValue=0;
 		lapCount++;
-		systemService.PlaySound("up2");
+		systemModel.PlaySound("up2");
 	}
 	else	//Reset Button
 	{
@@ -106,7 +106,7 @@ StopwatchAssistant.prototype.btnLapResetHandler = function()
 		this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValueMS();
 		this.controller.get("watchLapTimes").innerHTML = "";
 		this.controller.get("watchLapPlaceholder").innerHTML = lapDivEmptyHTML + lapDivEmptyHTML;
-		systemService.PlaySound("delete_01");
+		systemModel.PlaySound("delete_01");
 	}
 }
 
@@ -190,7 +190,7 @@ StopwatchAssistant.prototype.updateBestWorstLaps = function()
 
 StopwatchAssistant.prototype.setUIForRunning = function()
 {
-	systemService.PreventDisplaySleep();
+	systemModel.PreventDisplaySleep();
 	//Update Widgets
 	Mojo.Additions.SetWidgetLabel("btnLapReset", "Lap");
 	Mojo.Additions.DisableWidget("btnStart", true);
@@ -200,7 +200,7 @@ StopwatchAssistant.prototype.setUIForRunning = function()
 
 StopwatchAssistant.prototype.setUIForStopped = function()
 {
-	systemService.AllowDisplaySleep();
+	systemModel.AllowDisplaySleep();
 	//Update UI
 	Mojo.Additions.SetWidgetLabel("btnLapReset", "Reset");
 	Mojo.Additions.DisableWidget("btnStart", false);
@@ -282,13 +282,13 @@ StopwatchAssistant.prototype.deactivate = function(event) {
 	Mojo.Event.stopListening(this.controller.get('btnStop'),Mojo.Event.tap, this.btnStopHandler)
 	Mojo.Event.stopListening(this.controller.get('btnLapReset'),Mojo.Event.tap, this.btnLapResetHandler)
 	Mojo.Event.stopListening(this.controller.get('btnStart'),Mojo.Event.tap, this.btnStartHandler)
-	systemService.AllowDisplaySleep();
+	systemModel.AllowDisplaySleep();
 };
 
 StopwatchAssistant.prototype.cleanup = function(event) {
 	/* this function should do any cleanup needed before the scene is destroyed as 
 	   a result of being popped off the scene stack */
-	systemService.AllowDisplaySleep();
+	systemModel.AllowDisplaySleep();
 };
 
 //Helper functions
