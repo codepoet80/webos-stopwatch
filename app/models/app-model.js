@@ -17,8 +17,10 @@ var AppModel = function()
     //Define cookie defaults here and they will be loaded and enforced below
     this.AppSettingsDefaults = {
 		Debug: false,
-        VibeEnabled: 'true',
-        SoundEnabled: 'false'
+        VibeEnabled: true,
+		SoundEnabled: false,
+		TimerRunning: false,
+		TimerEndTime: "null"
     };
 }
 
@@ -65,19 +67,6 @@ AppModel.prototype.checkSettingsValid = function (loadedSettings)
 		{
 			Mojo.Log.warn("** A saved setting, " + key + ", was of type " + typeof(loadedSettings[key]) + " but expected type " + typeof(this.AppSettingsDefaults[key]));
 			retValue = false;
-		}
-		if (typeof this.AppSettingsDefaults[key] === "string" && this.AppSettingsDefaults[key].indexOf(this.BaseDateString) != -1 && loadedSettings[key].indexOf(this.BaseDateString))
-		{
-			Mojo.Log.error("** A saved time setting did not have the expected date value.");
-			retValue = false;
-		}
-		if (typeof this.AppSettingsDefaults[key] === "string" && (this.AppSettingsDefaults[key] == "false" || this.AppSettingsDefaults[key] == "true"))
-		{
-			if (loadedSettings[key] != "false" && loadedSettings[key] != "true")
-			{
-				Mojo.Log.error("** A saved time setting did not have the expected boolean value.");
-				retValue = false;
-			}
 		}
 	 }
 	 return retValue;

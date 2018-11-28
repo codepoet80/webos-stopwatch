@@ -7,7 +7,7 @@ function StopwatchAssistant() {
 
 var running=false;
 var timerStartValue=0;	//Value to start the timer at (non-0 for debugging)
-var stopWatchStartTime=0;
+var stopWatchStartTime=0;	//TODO: Replace this with a cookie so we can use on re-launch
 var stopWatchTimerValue=0;
 var lapStartTime=0;	
 var lapTimerValue=0;
@@ -15,19 +15,7 @@ var lapCount = 0; //Value to start the laps at (non-0 for debugging)
 var stopWatchTimerInterval;
 var lapDivEmptyHTML = "<table class='watchLap'><tr><td>&nbsp;</td></tr></table>";
 
-StopwatchAssistant.prototype.btnStartHandler = function()
-{
-	Mojo.Log.info("starting timer at " + stopWatchTimerValue)
-	running = true;
-
-	//Record start times and start timers
-	stopWatchStartTime = Date.now();
-	lapStartTime = Date.now();
-	stopWatchTimerInterval = setInterval(this.incrementTimer, 100);
-	this.setUIForRunning();
-	systemModel.PlaySound("down2");
-}
-
+//Timer functions
 StopwatchAssistant.prototype.incrementTimer = function()
 {
 	//Increment timer
@@ -42,6 +30,31 @@ StopwatchAssistant.prototype.incrementTimer = function()
 	{
 		//won't be able to update if the scene is not active, but that's ok
 	}
+}
+
+StopwatchAssistant.prototype.stopTimer = function()
+{
+	//Stop Timer
+	Mojo.Log.info("Stopping timer.");
+	running = false;
+	clearInterval(stopWatchTimerInterval);
+
+	var stopwatchTimerOffset = Date.now() - stopWatchStartTime;
+	stopWatchTimerValue = stopWatchTimerValue + stopwatchTimerOffset;
+}
+
+//UI event handlers
+StopwatchAssistant.prototype.btnStartHandler = function()
+{
+	Mojo.Log.info("starting timer at " + stopWatchTimerValue)
+	running = true;
+
+	//Record start times and start timers
+	stopWatchStartTime = Date.now();
+	lapStartTime = Date.now();
+	stopWatchTimerInterval = setInterval(this.incrementTimer, 100);
+	this.setUIForRunning();
+	systemModel.PlaySound("down2");
 }
 
 StopwatchAssistant.prototype.btnStopHandler = function()
@@ -60,17 +73,6 @@ StopwatchAssistant.prototype.btnStopHandler = function()
 	this.addLapToList(lapCount+1, (lapTimerValue / 100));
 	this.setUIForStopped();
 	systemModel.PlaySound("down2");
-}
-
-StopwatchAssistant.prototype.stopTimer = function()
-{
-	//Stop Timer
-	Mojo.Log.info("Stopping timer.");
-	running = false;
-	clearInterval(stopWatchTimerInterval);
-
-	var stopwatchTimerOffset = Date.now() - stopWatchStartTime;
-	stopWatchTimerValue = stopWatchTimerValue + stopwatchTimerOffset;
 }
 
 StopwatchAssistant.prototype.btnLapResetHandler = function()
@@ -110,6 +112,7 @@ StopwatchAssistant.prototype.btnLapResetHandler = function()
 	}
 }
 
+//UI manipulation functions
 StopwatchAssistant.prototype.addLapToList = function(showLap, timerValue) 
 {
 	var rowTables = document.getElementById("watchLapTimes").children;
@@ -208,6 +211,7 @@ StopwatchAssistant.prototype.setUIForStopped = function()
 	Mojo.Additions.DisableWidget("btnStop", true);
 }
 
+//Mojo interface implementations
 StopwatchAssistant.prototype.setup = function() {
 	Mojo.Log.info("Stopwatch scene started."); 
 	/* this function is for setup tasks that have to happen when the scene is first created */
