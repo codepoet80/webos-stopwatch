@@ -9,6 +9,7 @@
         "scenes": "timer",
         "source": "app/assistants/timer-assistant.js"
     },
+    {"source": "app/assistants/alarm-assistant.js"},
     {"source": "app/models/app-model.js"},
     {"source": "app/models/system-model.js"}
 ]

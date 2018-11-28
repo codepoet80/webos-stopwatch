@@ -1,9 +1,10 @@
 var systemModel = null;
 var appModel = null;
-function AppAssistant(appController) {
+function AppAssistant() {
 	appModel = new AppModel();
 	systemModel = new SystemModel();
 	Mojo.Additions = Additions;
+	showAlarm = this.showAlarm;
 }
 
 //This function will handle normal launching and relaunching the app when an alarm goes off(see the device/alarm scene)
@@ -27,7 +28,10 @@ AppAssistant.prototype.handleLaunch = function(params) {
 		{	
 
 			Mojo.Log.error("found an existing stage!");
-			var stageController = this.controller.getStageController("");
+			Mojo.Log.error("app-assistant setting up an alarm launch, showing alert scene");
+			appModel.showNotificationStage("alarm", params);
+			//this.showAlarm(params);
+			/*var stageController = this.controller.getStageController("");
 			if (stageController)
 			{
 				Mojo.Log.error("current scene is " + stageController.activeScene().sceneName);
@@ -41,7 +45,7 @@ AppAssistant.prototype.handleLaunch = function(params) {
 			else
 			{
 				Mojo.Log.error("stage controller wasn't usable!");
-			}
+			}*/
 		}
 		//If not, this will fall through to normal stage creation
 		//	We'll have to handle the launch types in the stage as well

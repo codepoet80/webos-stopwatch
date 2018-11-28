@@ -24,6 +24,21 @@ var AppModel = function()
     };
 }
 
+AppModel.prototype.showNotificationStage = function(stageName, params) 
+{
+	var stageCallBack = function(stageController) {
+		var stageController = Mojo.Controller.stageController;
+		stageController.pushScene({name: "alarm", sceneTemplate: "timer/alarm-scene"});
+	}
+	Mojo.Controller.getAppController().createStageWithCallback({
+		name: 'alarm', 
+		lightweight: true,
+		name: stageName, 
+		"height": 160, 
+		sound: "/media/internal/ringtones/Rain Dance.mp3"
+	}, stageCallBack, 'popupalert');
+}
+
 //You probably don't need to change the below functions since they all work against the Cookie defaults you defined above.
 //  LoadSettings: call when your app starts, or you want to load previously persisted options.
 //  SaveSettings: call any time you want to persist an option.
