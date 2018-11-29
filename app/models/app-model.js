@@ -24,7 +24,6 @@ var AppModel = function()
     };
 }
 
-
 AppModel.prototype.showNotificationStage = function(stageName, height, sound, vibrate) 
 {
 	Mojo.Log.error("Showing notification stage.");
@@ -32,9 +31,8 @@ AppModel.prototype.showNotificationStage = function(stageName, height, sound, vi
 	var soundToUse = "assets/silent.mp3";
 	if (sound == true)
 		soundToUse = "/media/internal/ringtones/Rain Dance.mp3"
-
 	if (vibrate == true)
-		Mojo.Controller.getAppController().playSoundNotification("vibrate");
+		vibeInterval = setInterval(doVibrate, 500);
 
 	var stageCallBack = function(stageController) {
 		stageController.pushScene({name: "alarm", sceneTemplate: "timer/alarm-scene"});
@@ -46,6 +44,20 @@ AppModel.prototype.showNotificationStage = function(stageName, height, sound, vi
 		"height": height, 
 		sound: soundToUse
 	}, stageCallBack, 'popupalert');
+}
+
+var vibeInterval;
+var vibeCount = 0;
+var vibeMax = 5;
+doVibrate = function()
+{
+	vibeCount++;
+	Mojo.Controller.getAppController().playSoundNotification("vibrate");
+	if (vibeCount >= vibeMax)
+	{
+		clearInterval(vibeInterval);
+		vibeCount = 0;
+	}
 }
 
 //You probably don't need to change the below functions since they all work against the Cookie defaults you defined above.
