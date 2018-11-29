@@ -8,7 +8,8 @@ function TimerAssistant() {
 var timerInterval;
 var timerDuration;
 var timerCount;
-var timerResetValue = "00:00:00";
+var timerDefaultValue = "00:00:00";
+var timerResetValue = timerDefaultValue;
 
 //Timer functions
 TimerAssistant.prototype.startLocalTimer = function (Hours, Mins, Seconds)
@@ -32,7 +33,7 @@ TimerAssistant.prototype.startLocalTimer = function (Hours, Mins, Seconds)
 	appModel.SaveSettings();
 
 	//Set the local timer value now, then repeatedly
-	this.incrementTimer();
+	//this.incrementTimer();
 	timerInterval = setInterval(this.incrementTimer, 1000);
 }
 
@@ -42,9 +43,9 @@ TimerAssistant.prototype.incrementTimer = function(showTimerValue)
 	if (!showTimerValue)
 	{
 		timerCount++;
-		var stopwatchTimerOffset = timerCount * 1000;
-		var showTimerValue = timerDuration - stopwatchTimerOffset;
-		Mojo.Log.info("Updating timer using offsetvalue value " + stopwatchTimerOffset + " for timer value " + showTimerValue);
+		
+		showTimerValue = Date.parse(appModel.AppSettingsCurrent["TimerEndTime"]) - new Date();
+		Mojo.Log.error("*** previously running timer delta from now: " + showTimerValue);
 	}
 	else
 	{
@@ -56,7 +57,7 @@ TimerAssistant.prototype.incrementTimer = function(showTimerValue)
 		if (showTimerValue < 1000)
 		{
 			clearInterval(timerInterval);
-			document.getElementById("timerViewFace").innerHTML = timerResetValue;
+			document.getElementById("timerViewFace").innerHTML = timerDefaultValue;
 		}
 		else
 		{
@@ -97,15 +98,16 @@ TimerAssistant.prototype.timerDone = function()
 TimerAssistant.prototype.btnStartHandler = function()
 {
 	Mojo.Log.info("## timer - Start button pressed!");
-	
+	timerResetValue = document.getElementById("timerViewFace").innerHTML;
 	//Figure out what the timer should go to
 	var Hours = Number((this.controller.get("hour_field").innerText).trim()).padWithZeroes();
 	var Mins = Number((this.controller.get("minute_field").innerText).trim()).padWithZeroes();
-	var Seconds = Number((this.controller.get("second_field").innerText).trim()).padWithZeroes();
+	var Seconds = Number((this.controller.get("second_field").innerText).trim()) + 1;
+	var SystemSeconds = Seconds - 1;
 	
 	//Start the local and system timers
-	this.startLocalTimer(Hours, Mins, Seconds);
-	systemModel.SetSystemAlarmRelative("JonsTimer", Hours + ":" + Mins + ":" + Seconds + ".00");
+	this.startLocalTimer(Hours, Mins, Seconds.padWithZeroes());
+	systemModel.SetSystemAlarmRelative("JonsTimer", Hours + ":" + Mins + ":" + SystemSeconds.padWithZeroes() + ".00");
 
 	//Do UI updates and feedback
 	this.setUIForRunning();
@@ -115,12 +117,22 @@ TimerAssistant.prototype.btnStartHandler = function()
 TimerAssistant.prototype.btnStopHandler = function()
 {
 	Mojo.Log.info("## timer - stop button pressed!");
-	//Cancel timers
-	appModel.AppSettingsCurrent["TimerRunning"] = false;
-	clearInterval(timerInterval);
-	systemModel.ClearSystemAlarm("JonsTimer");
-	this.setUIForReset();
-	systemModel.PlaySound("delete_01");
+	if (appModel.AppSettingsCurrent["TimerRunning"] == true)
+	{
+		//Cancel timers
+		appModel.AppSettingsCurrent["TimerRunning"] = false;
+		appModel.SaveSettings();
+		clearInterval(timerInterval);
+		systemModel.ClearSystemAlarm("JonsTimer");
+		document.getElementById("timerViewFace").innerHTML = timerResetValue;
+		this.setUIForStopped();
+		systemModel.PlaySound("down2");
+	}
+	else
+	{
+		systemModel.PlaySound("delete_01");
+		this.setUIForReset();
+	}
 }
 
 TimerAssistant.prototype.timerFaceTapped = function(event){
@@ -163,21 +175,25 @@ TimerAssistant.prototype.setUIForRunning = function ()
 {
 	Mojo.Additions.DisableWidget("btnStart", true);
 	Mojo.Additions.DisableWidget("btnStop", false);
+	Mojo.Additions.SetWidgetLabel("btnStop", "Stop");
 	document.getElementById('runningSpinner').style.display = "block";
 }
 
 TimerAssistant.prototype.setUIForStopped = function ()
 {
 	Mojo.Additions.DisableWidget("btnStart", false);
-	Mojo.Additions.DisableWidget("btnStop", true);
+	Mojo.Additions.DisableWidget("btnStop", false);
+	Mojo.Additions.SetWidgetLabel("btnStop", "Clear");
 	document.getElementById('runningSpinner').style.display = "none";
 }
 
 TimerAssistant.prototype.setUIForReset = function ()
 {
+	timerResetValue = timerDefaultValue;
+	document.getElementById("timerViewFace").innerHTML = timerDefaultValue;
 	Mojo.Additions.DisableWidget("btnStart", true);
 	Mojo.Additions.DisableWidget("btnStop", true);
-	this.controller.get("timerViewFace").innerHTML = timerResetValue;
+	Mojo.Additions.SetWidgetLabel("btnStop", "Stop");
 	Mojo.Additions.SetPickerWidgetValue("hour_field", "0");
 	Mojo.Additions.SetPickerWidgetValue("minute_field", "0");
 	Mojo.Additions.SetPickerWidgetValue("second_field", "0");
