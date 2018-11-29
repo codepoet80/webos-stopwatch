@@ -317,6 +317,7 @@ TimerAssistant.prototype.setup = function() {
 };
 
 TimerAssistant.prototype.activate = function(event) {
+	document.getElementById("divTimerOptions").style.display = "block";
 	if (appModel.AlarmLaunch)
 	{
 		Mojo.Log.error("*** timer scene activated because of alarm");

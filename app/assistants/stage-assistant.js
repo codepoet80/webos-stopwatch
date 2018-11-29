@@ -45,6 +45,7 @@ StageAssistant.prototype.handleCommand = function(event) {
 
 			case 'do-Timer':
 			{
+				//stageController.swapScene("timer");
 				if (sceneController.sceneName != "timer")
 				{
 					stageController.swapScene(
@@ -58,14 +59,15 @@ StageAssistant.prototype.handleCommand = function(event) {
 
 			case 'do-Stopwatch':
 			{
+				//stageController.swapScene("stopwatch");
 				if (sceneController.sceneName != "stopwatch")
-					{
-						stageController.swapScene(
-							{
-								transition: Mojo.Transition.crossFade,
-								name: "stopwatch"
-							});
-					}
+				{
+					stageController.swapScene(
+						{
+							transition: Mojo.Transition.crossFade,
+							name: "stopwatch"
+						});
+				}
 				break;
 			}
 		}
