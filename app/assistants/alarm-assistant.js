@@ -1,23 +1,40 @@
-/* This is an assistant for the popup alert
+/* This is an assistant for the popup alarm alert
  */
 function AlarmAssistant(argFromPusher){
     this.passedArguments = argFromPusher;
 }
 
-
 AlarmAssistant.prototype.setup = function(){
-	//update the scene with the message passed in when setting the alarm
-    this.controller.get('info').update("Hello world!");
-	
+	appModel.LoadSettings();
     //set up button widget
 	this.controller.setupWidget('quit-button', {}, {buttonLabel:'Close'})
 	this.quitButtonHandler = this.handleQuitButton.bind(this);
-    Mojo.Event.listen(this.controller.get('quit-button'), Mojo.Event.tap, this.quitButtonHandler)
+    Mojo.Event.listen(this.controller.get('quit-button'), Mojo.Event.tap, this.quitButtonHandler);
 }
 
 AlarmAssistant.prototype.handleQuitButton = function(){
 	//close just this popupAlert stage
     Mojo.Controller.appController.closeStage("alarm");
+
+    var stageController = Mojo.Controller.appController.getStageController("");
+    if (stageController)
+    {
+        Mojo.Log.error("current scene is " + stageController.activeScene().sceneName);
+        stageController.activate();
+        if (stageController.activeScene().sceneName == "timer")
+        {
+            //If the timer is in focus, we need to re-launch it so that it knows about the alarm
+            stageController.swapScene(
+            {
+                transition: Mojo.Transition.none,
+                name: "timer"
+            });
+        }
+    }
+    else
+    {
+        Mojo.Log.error("stage controller wasn't usable!");
+    }
 }
 
 // Cleanup anything we did in setup function

@@ -16,14 +16,12 @@ StageAssistant.prototype.setup = function() {
 
 	if (appModel.AlarmLaunch)
 	{
-		Mojo.Log.error("stage setting up an alarm launch, showing timer scene");
+		Mojo.Log.error("Stage launched after an alarm, so showing timer scene");
 		stageController.pushScene("timer");
-		Mojo.Log.error("stage setting up an alarm launch, showing alert scene");
-		appModel.showNotificationStage("alarm", null);
 	}
 	else
 	{
-		Mojo.Log.error("stage setting up a normal launch");
+		Mojo.Log.error("Stage launched normal, so going to default scene");
 		stageController.pushScene(appModel.DefaultScene);
 	}
 };

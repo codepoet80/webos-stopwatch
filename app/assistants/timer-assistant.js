@@ -72,17 +72,25 @@ TimerAssistant.prototype.incrementTimer = function(showTimerValue)
 
 TimerAssistant.prototype.timerDone = function()
 {
-	Mojo.Controller.getAppController().showBanner("Timer done!", {source:'notification'});
-	if (appModel.AppSettingsCurrent["SoundEnabled"] == true)
-		systemModel.PlaySound("alert_buzz");
-	if (appModel.AppSettingsCurrent["VibeEnabled"] == true)
-		Mojo.Controller.getAppController().playSoundNotification("vibrate");
-	appModel.AppSettingsCurrent["TimerRunning"] = false;
-	appModel.SaveSettings();
+	Mojo.Log.error("timer done called");
 
 	//Clear timers
 	clearInterval(timerInterval);
 	systemModel.ClearSystemAlarm("JonsTimer");
+	appModel.AppSettingsCurrent["TimerRunning"] = false;
+	appModel.AppSettingsCurrent["TimerEndTime"] = "null";
+	appModel.SaveSettings();
+
+	try
+	{
+		Mojo.Log.error("timer done is asking UI to reset");
+		this.setUIForReset();
+	}
+	catch (error)
+	{
+		Mojo.Log.error("timer done could not reset UI");
+		//will have to do this next time we activate
+	}
 }
 
 //UI event handlers
@@ -280,8 +288,8 @@ TimerAssistant.prototype.setup = function() {
 			{},
 			{
 				items: [
-					{iconPath: 'images/count-up.png', command:'do-Stopwatch'},
-					{iconPath: 'images/count-down.png', command:'do-Timer'}
+					{iconPath: 'assets/count-up.png', command:'do-Stopwatch'},
+					{iconPath: 'assets/count-down.png', command:'do-Timer'}
 				],toggleCmd:'do-Timer', 
 			},
 			{}
@@ -290,9 +298,6 @@ TimerAssistant.prototype.setup = function() {
 	this.controller.setupWidget(Mojo.Menu.commandMenu, this.cmdMenuAttributes, this.cmdMenuModel);
 	
 	Mojo.Log.info("## timer - scene setup done."); 
-	/* app-level event handlers */
-	//Mojo.Event.listen(this.controller.stageController.document, Mojo.Event.stageDeactivate, this.appDeactivated);
-	//Mojo.Event.listen(this.controller.stageController.document, Mojo.Event.stageActivate, this.appActivated);
 };
 
 TimerAssistant.prototype.activate = function(event) {

@@ -1,6 +1,6 @@
 /*
 AppModel Model
- Version 0.2
+ Version 0.2b
  Created: 2018
  Author: Jonathan Wise
  License: MIT
@@ -24,18 +24,27 @@ var AppModel = function()
     };
 }
 
-AppModel.prototype.showNotificationStage = function(stageName, params) 
+
+AppModel.prototype.showNotificationStage = function(stageName, height, sound, vibrate) 
 {
+	Mojo.Log.error("Showing notification stage.");
+	//Determine what sound to use
+	var soundToUse = "assets/silent.mp3";
+	if (sound == true)
+		soundToUse = "/media/internal/ringtones/Rain Dance.mp3"
+
+	if (vibrate == true)
+		Mojo.Controller.getAppController().playSoundNotification("vibrate");
+
 	var stageCallBack = function(stageController) {
-		var stageController = Mojo.Controller.stageController;
 		stageController.pushScene({name: "alarm", sceneTemplate: "timer/alarm-scene"});
 	}
 	Mojo.Controller.getAppController().createStageWithCallback({
 		name: 'alarm', 
 		lightweight: true,
 		name: stageName, 
-		"height": 160, 
-		sound: "/media/internal/ringtones/Rain Dance.mp3"
+		"height": height, 
+		sound: soundToUse
 	}, stageCallBack, 'popupalert');
 }
 

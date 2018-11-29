@@ -244,8 +244,8 @@ StopwatchAssistant.prototype.setup = function() {
 			{},
 			{
 				items: [
-					{iconPath: 'images/count-up.png', command:'do-Stopwatch'},
-					{iconPath: 'images/count-down.png', command:'do-Timer'}
+					{iconPath: 'assets/count-up.png', command:'do-Stopwatch'},
+					{iconPath: 'assets/count-down.png', command:'do-Timer'}
 				],toggleCmd:'do-Stopwatch', 
 			},
 			{}
