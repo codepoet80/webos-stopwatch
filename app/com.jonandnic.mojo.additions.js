@@ -1,6 +1,6 @@
 /*
 Mojo Additions
- Version 0.3b
+ Version 0.3c
  Created: 2018
  Author: Jonathan Wise
  License: MIT
@@ -17,9 +17,10 @@ Additions.ShowDialogBox = function(title, message){
     
     this.controller.showAlertDialog({
     onChoose: function(value) {},
-    title:title,
-    message:message,
-        choices:[ {label:'OK', value:'OK', type:'color'} ]
+        title:title,
+        message:message,
+            choices:[ {label:'OK', value:'OK'} ],
+        allowHTMLMessage:true
     });
 }
 
