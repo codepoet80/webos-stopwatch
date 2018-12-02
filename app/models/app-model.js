@@ -1,6 +1,6 @@
 /*
 App Model
- Version 0.3
+ Version 0.3a
  Created: 2018
  Author: Jonathan Wise
  License: MIT
@@ -35,7 +35,7 @@ AppModel.prototype.LoadSettings = function () {
 	try
 	{
 		appSettings = settingsCookie.get();
-		if (typeof appSettings === "undefined" || appSettings == null || !this.checkSettingsValid(appSettings)) {
+		if (typeof appSettings == "undefined" || appSettings == null || !this.checkSettingsValid(appSettings)) {
 			Mojo.Log.error("** Using first run default settings");
 		}
 		else
@@ -50,6 +50,7 @@ AppModel.prototype.LoadSettings = function () {
 	{
 		settingsCookie.put(null);
 		Mojo.Log.error("** Settings cookie were corrupt and have been purged!");
+		Mojo.Log.error(ex);
 	}
 	return loadSuccess;
 }
@@ -94,10 +95,15 @@ AppModel.prototype.SaveSettings = function ()
 AppModel.prototype.ResetSettings = function()
 {
 	//Tell main scene to drop settings
-	this.DoReset = true;
-	this.AppSettingsCurrent = this.AppSettingsDefault;
-	//Restart main scene
+	this.AppSettingsCurrent = this.AppSettingsDefaults;
+	this.SaveSettings();
+	Mojo.Log.error("reset settings");
+	
 	var stageController = Mojo.Controller.stageController;
 	stageController.popScene(this.DefaultScene);
+	Mojo.Log.error("closed scene");
+
+	//Restart main scene
 	stageController.pushScene(this.DefaultScene);
+	Mojo.Log.error("opened scene");
 }
