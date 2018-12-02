@@ -190,7 +190,7 @@ SystemModel.prototype.SetSystemBrightness = function (newBrightness)
 }
 
 //Show a notification window in its own small stage
-SystemModel.prototype.showNotificationStage = function(stageName, height, sound, vibrate) 
+SystemModel.prototype.ShowNotificationStage = function(stageName, height, sound, vibrate) 
 {
 	Mojo.Log.error("Showing notification stage.");
 	//Determine what sound to use
