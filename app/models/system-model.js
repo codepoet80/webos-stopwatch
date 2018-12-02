@@ -1,6 +1,6 @@
 /*
 System Model
- Version 0.3
+ Version 0.3a
  Created: 2018
  Author: Jonathan Wise
  License: MIT
@@ -220,7 +220,8 @@ SystemModel.prototype.ShowNotificationStage = function(stageName, sceneName, hei
 		name: stageName, 
 		lightweight: true,
 		height: heightToUse, 
-		sound: soundToUse
+		sound: soundToUse,
+		clickableWhenLocked: true
 	}, stageCallBack, 'popupalert');
 }
 
