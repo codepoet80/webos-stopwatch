@@ -24,42 +24,6 @@ var AppModel = function()
     };
 }
 
-AppModel.prototype.showNotificationStage = function(stageName, height, sound, vibrate) 
-{
-	Mojo.Log.error("Showing notification stage.");
-	//Determine what sound to use
-	var soundToUse = "assets/silent.mp3";
-	if (sound == true)
-		soundToUse = "/media/internal/ringtones/Rain Dance.mp3"
-	if (vibrate == true)
-		vibeInterval = setInterval(doVibrate, 500);
-
-	var stageCallBack = function(stageController) {
-		stageController.pushScene({name: "alarm", sceneTemplate: "timer/alarm-scene"});
-	}
-	Mojo.Controller.getAppController().createStageWithCallback({
-		name: 'alarm', 
-		lightweight: true,
-		name: stageName, 
-		"height": height, 
-		sound: soundToUse
-	}, stageCallBack, 'popupalert');
-}
-
-var vibeInterval;
-var vibeCount = 0;
-var vibeMax = 5;
-doVibrate = function()
-{
-	vibeCount++;
-	Mojo.Controller.getAppController().playSoundNotification("vibrate");
-	if (vibeCount >= vibeMax)
-	{
-		clearInterval(vibeInterval);
-		vibeCount = 0;
-	}
-}
-
 //You probably don't need to change the below functions since they all work against the Cookie defaults you defined above.
 //  LoadSettings: call when your app starts, or you want to load previously persisted options.
 //  SaveSettings: call any time you want to persist an option.
@@ -104,6 +68,19 @@ AppModel.prototype.checkSettingsValid = function (loadedSettings)
 			Mojo.Log.warn("** A saved setting, " + key + ", was of type " + typeof(loadedSettings[key]) + " but expected type " + typeof(this.AppSettingsDefaults[key]));
 			retValue = false;
 		}
+		if (typeof this.AppSettingsDefaults[key] === "string" && this.AppSettingsDefaults[key].indexOf(this.BaseDateString) != -1 && loadedSettings[key].indexOf(this.BaseDateString))
+		{
+			Mojo.Log.error("** A saved setting could not be compared to an expected date value.");
+			retValue = false;
+		}
+		if (typeof this.AppSettingsDefaults[key] === "string" && (this.AppSettingsDefaults[key] == "false" || this.AppSettingsDefaults[key] == "true"))
+		{
+			if (loadedSettings[key] != "false" && loadedSettings[key] != "true")
+			{
+				Mojo.Log.error("** A saved setting did not have the expected boolean value.");
+				retValue = false;
+			}
+		}
 	 }
 	 return retValue;
 }
@@ -118,8 +95,9 @@ AppModel.prototype.ResetSettings = function()
 {
 	//Tell main scene to drop settings
 	this.DoReset = true;
+	this.AppSettingsCurrent = this.AppSettingsDefault;
 	//Restart main scene
 	var stageController = Mojo.Controller.stageController;
-	stageController.popScene('DefaultScene');
-	stageController.pushScene('DefaultScene');
+	stageController.popScene(this.DefaultScene);
+	stageController.pushScene(this.DefaultScene);
 }
