@@ -22,6 +22,6 @@ AppAssistant.prototype.handleLaunch = function(params) {
     {
 		Mojo.Log.error("This is an alarm launch!");
 		appModel.AlarmLaunch = true;
-		systemModel.ShowNotificationStage("alarm", 150, appModel.AppSettingsCurrent["SoundEnabled"], appModel.AppSettingsCurrent["VibeEnabled"]);
+		systemModel.ShowNotificationStage("alarm", "timer/alarm-scene", 150, appModel.AppSettingsCurrent["SoundEnabled"], appModel.AppSettingsCurrent["VibeEnabled"]);
     }
 };

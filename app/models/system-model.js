@@ -190,7 +190,7 @@ SystemModel.prototype.SetSystemBrightness = function (newBrightness)
 }
 
 //Show a notification window in its own small stage
-SystemModel.prototype.ShowNotificationStage = function(stageName, height, sound, vibrate) 
+SystemModel.prototype.ShowNotificationStage = function(stageName, sceneName, heightToUse, sound, vibrate) 
 {
 	Mojo.Log.error("Showing notification stage.");
 	//Determine what sound to use
@@ -201,20 +201,25 @@ SystemModel.prototype.ShowNotificationStage = function(stageName, height, sound,
 	if (vibrate != null)
 	{
 		if (!Number(vibrate))
-			vibeMax = 5;
+		{
+			if (vibrate == true)
+				vibeMax = 5;
+			else
+				vibeMax = 0;
+		}	
 		else
 			vibeMax = Number(vibrate);
+		if (vibeMax > 0)
 		vibeInterval = setInterval(doVibrate, 500);
 	}
 
 	var stageCallBack = function(stageController) {
-		stageController.pushScene({name: "alarm", sceneTemplate: "timer/alarm-scene"});
+		stageController.pushScene({name: stageName, sceneTemplate: sceneName});
 	}
 	Mojo.Controller.getAppController().createStageWithCallback({
-		name: 'alarm', 
-		lightweight: true,
 		name: stageName, 
-		"height": height, 
+		lightweight: true,
+		height: heightToUse, 
 		sound: soundToUse
 	}, stageCallBack, 'popupalert');
 }
