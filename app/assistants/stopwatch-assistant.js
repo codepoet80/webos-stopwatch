@@ -1,10 +1,4 @@
-function StopwatchAssistant() {
-	/* this is the creator function for your scene assistant object. It will be passed all the 
-	   additional parameters (after the scene name) that were passed to pushScene. The reference
-	   to the scene controller (this.controller) has not be established yet, so any initialization
-	   that needs the scene controller should be done in the setup function below. */
-}
-
+//Globals
 var running=false;
 var timerStartValue=0;	//Value to start the timer at (non-0 for debugging)
 var stopWatchStartTime=0;	//TODO: Replace this with a cookie so we can use on re-launch
@@ -15,33 +9,75 @@ var lapCount = 0; //Value to start the laps at (non-0 for debugging)
 var stopWatchTimerInterval;
 var lapDivEmptyHTML = "<table class='watchLap'><tr><td>&nbsp;</td></tr></table>";
 
-//Timer functions
-StopwatchAssistant.prototype.incrementTimer = function()
-{
-	//Increment timer
-	running = true;
-	var stopwatchTimerOffset = Date.now() - stopWatchStartTime;
-	var showTimerValue = stopWatchTimerValue + stopwatchTimerOffset;
-	try
-	{
-		document.getElementById("watchViewDetail").innerHTML = (showTimerValue / 100).toLongTimeValueMS();
-	}
-	catch (error)
-	{
-		//won't be able to update if the scene is not active, but that's ok
-	}
+function StopwatchAssistant() {
+	
 }
 
-StopwatchAssistant.prototype.stopTimer = function()
-{
-	//Stop Timer
-	Mojo.Log.info("Stopping timer.");
-	running = false;
-	clearInterval(stopWatchTimerInterval);
+StopwatchAssistant.prototype.setup = function() {
+	Mojo.Log.info("## stopwatch - scene started."); 
+	/* this function is for setup tasks that have to happen when the scene is first created */
+	
+	/* setup widgets here */
+	this.controller.get("watchViewTitle").innerHTML = "Stopwatch";
+	this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValueMS();
+	this.controller.get("watchLapTimes").innerHTML = "";
+	this.controller.get("watchLapPlaceholder").innerHTML = lapDivEmptyHTML + lapDivEmptyHTML;
 
-	var stopwatchTimerOffset = Date.now() - stopWatchStartTime;
-	stopWatchTimerValue = stopWatchTimerValue + stopwatchTimerOffset;
-}
+	this.controller.setupWidget('btnStop', this.attributes={}, this.model={label:"Stop", buttonClass: 'palm-button negative disabled buttonfloat', disabled: true});
+	this.btnStopHandler = this.btnStopHandler.bind(this);
+
+	this.controller.setupWidget('btnLapReset', this.attributes={}, this.model={label:"Reset", buttonClass: 'palm-button buttonfloat', disabled: true});
+	this.btnLapResetHandler = this.btnLapResetHandler.bind(this);
+
+	this.controller.setupWidget('btnStart', this.attributes={}, this.model={label:"Start", buttonClass: 'palm-button affirmative buttonfloat', disabled: false});
+	this.btnStartHandler = this.btnStartHandler.bind(this);
+
+	//App Menu (handled in stage controller: stage-assistant.js)
+	this.controller.setupWidget(Mojo.Menu.appMenu, Mojo.Controller.stageController.appMenuAttributes, Mojo.Controller.stageController.appMenuModel);
+
+	//Command Menu (buttons on the bottom)
+	this.cmdMenuAttributes = {
+		menuClass: 'watch-command-menu'
+	}
+	this.cmdMenuModel = {
+		visible: true,
+		items: [
+			{},
+			{
+				items: [
+					{iconPath: 'assets/count-up.png', command:'do-Stopwatch'},
+					{iconPath: 'assets/count-down.png', command:'do-Timer'}
+				],toggleCmd:'do-Stopwatch', 
+			},
+			{}
+		]
+	};
+	this.controller.setupWidget(Mojo.Menu.commandMenu, this.cmdMenuAttributes, this.cmdMenuModel);
+	Mojo.Log.info("## stopwatch - scene setup done."); 
+};
+
+StopwatchAssistant.prototype.activate = function(event) {
+	Mojo.Log.info("Stopwatch scene activated.");
+	if (running)	//If we came back to this scene when the timer was already running
+	{
+		this.setUIForRunning();
+		//TODO: Need to re-draw lap rows too
+	}
+	else
+	{
+		this.setUIForStopped();
+		//Reset counters
+		stopWatchTimerValue = timerStartValue;
+		lapCount = 0;
+	}
+	
+	/* put in event handlers here that should only be in effect when this scene is active. For
+	   example, key handlers that are observing the document */
+	Mojo.Event.listen(this.controller.get('btnStop'), Mojo.Event.tap, this.btnStopHandler);
+	Mojo.Event.listen(this.controller.get('btnLapReset'), Mojo.Event.tap, this.btnLapResetHandler);
+	Mojo.Event.listen(this.controller.get('btnStart'), Mojo.Event.tap, this.btnStartHandler);
+
+};
 
 //UI event handlers
 StopwatchAssistant.prototype.btnStartHandler = function()
@@ -211,73 +247,6 @@ StopwatchAssistant.prototype.setUIForStopped = function()
 	Mojo.Additions.DisableWidget("btnStop", true);
 }
 
-//Mojo interface implementations
-StopwatchAssistant.prototype.setup = function() {
-	Mojo.Log.info("Stopwatch scene started."); 
-	/* this function is for setup tasks that have to happen when the scene is first created */
-	
-	/* setup widgets here */
-	this.controller.get("watchViewTitle").innerHTML = "Stopwatch";
-	this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValueMS();
-	this.controller.get("watchLapTimes").innerHTML = "";
-	this.controller.get("watchLapPlaceholder").innerHTML = lapDivEmptyHTML + lapDivEmptyHTML;
-
-	this.controller.setupWidget('btnStop', this.attributes={}, this.model={label:"Stop", buttonClass: 'palm-button negative disabled buttonfloat', disabled: true});
-	this.btnStopHandler = this.btnStopHandler.bind(this);
-
-	this.controller.setupWidget('btnLapReset', this.attributes={}, this.model={label:"Reset", buttonClass: 'palm-button buttonfloat', disabled: true});
-	this.btnLapResetHandler = this.btnLapResetHandler.bind(this);
-
-	this.controller.setupWidget('btnStart', this.attributes={}, this.model={label:"Start", buttonClass: 'palm-button affirmative buttonfloat', disabled: false});
-	this.btnStartHandler = this.btnStartHandler.bind(this);
-
-	//App Menu (handled in stage controller: stage-assistant.js)
-	this.controller.setupWidget(Mojo.Menu.appMenu, {}, Mojo.Controller.stageController.appMenuModel);
-
-	//Command Menu (buttons on the bottom)
-	this.cmdMenuAttributes = {
-		menuClass: 'watch-command-menu'
-	}
-	this.cmdMenuModel = {
-		visible: true,
-		items: [
-			{},
-			{
-				items: [
-					{iconPath: 'assets/count-up.png', command:'do-Stopwatch'},
-					{iconPath: 'assets/count-down.png', command:'do-Timer'}
-				],toggleCmd:'do-Stopwatch', 
-			},
-			{}
-		]
-	};
-	this.controller.setupWidget(Mojo.Menu.commandMenu, this.cmdMenuAttributes, this.cmdMenuModel);
-	Mojo.Log.info("Scene setup done."); 
-};
-
-StopwatchAssistant.prototype.activate = function(event) {
-	Mojo.Log.info("Stopwatch scene activated.");
-	/* put in event handlers here that should only be in effect when this scene is active. For
-	   example, key handlers that are observing the document */
-	
-	Mojo.Event.listen(this.controller.get('btnStop'), Mojo.Event.tap, this.btnStopHandler);
-	Mojo.Event.listen(this.controller.get('btnLapReset'), Mojo.Event.tap, this.btnLapResetHandler);
-	Mojo.Event.listen(this.controller.get('btnStart'), Mojo.Event.tap, this.btnStartHandler);
-
-	if (running)	//If we came back to this scene when the timer was already running
-	{
-		this.setUIForRunning();
-		//TODO: Need to re-draw lap rows too
-	}
-	else
-	{
-		this.setUIForStopped();
-		//Reset counters
-		stopWatchTimerValue = timerStartValue;
-		lapCount = 0;
-	}
-};
-
 StopwatchAssistant.prototype.deactivate = function(event) {
 	Mojo.Log.info("Stopwatch scene deactivated.");
 	/* remove any event handlers you added in activate and do any other cleanup that should happen before
@@ -294,6 +263,34 @@ StopwatchAssistant.prototype.cleanup = function(event) {
 	   a result of being popped off the scene stack */
 	systemModel.AllowDisplaySleep();
 };
+
+//Timer functions
+StopwatchAssistant.prototype.incrementTimer = function()
+{
+	//Increment timer
+	running = true;
+	var stopwatchTimerOffset = Date.now() - stopWatchStartTime;
+	var showTimerValue = stopWatchTimerValue + stopwatchTimerOffset;
+	try
+	{
+		document.getElementById("watchViewDetail").innerHTML = (showTimerValue / 100).toLongTimeValueMS();
+	}
+	catch (error)
+	{
+		//won't be able to update if the scene is not active, but that's ok
+	}
+}
+
+StopwatchAssistant.prototype.stopTimer = function()
+{
+	//Stop Timer
+	Mojo.Log.info("Stopping timer.");
+	running = false;
+	clearInterval(stopWatchTimerInterval);
+
+	var stopwatchTimerOffset = Date.now() - stopWatchStartTime;
+	stopWatchTimerValue = stopWatchTimerValue + stopwatchTimerOffset;
+}
 
 //Helper functions
 Number.prototype.toLongTimeValueMS = function() {

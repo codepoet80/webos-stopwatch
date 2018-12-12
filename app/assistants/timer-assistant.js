@@ -1,98 +1,161 @@
-function TimerAssistant() {
-	/* this is the creator function for your scene assistant object. It will be passed all the 
-	   additional parameters (after the scene name) that were passed to pushScene. The reference
-	   to the scene controller (this.controller) has not be established yet, so any initialization
-	   that needs the scene controller should be done in the setup function below. */
-}
-
+//Globals
 var timerInterval;
 var timerDuration;
 var timerCount;
 var timerDefaultValue = "00:00:00";
 var timerResetValue = timerDefaultValue;
 
-//Timer functions
-TimerAssistant.prototype.startLocalTimer = function (Hours, Mins, Seconds)
-{
-	clearInterval(timerInterval);
-	//Start timers
-	timerCount = 0;
-	timerDuration = parseInt(((Hours * 60) * 60) * 1000);
-	timerDuration += parseInt((Mins * 60) * 1000);
-	timerDuration += parseInt(Seconds * 1000);
+function TimerAssistant() {
 
-	var timerValue = new Date();
-	Mojo.Log.error("Timer started at: " + timerValue);
-	Mojo.Log.error("Timer will end in: " + timerDuration + "ms");
-	timerValue.setMilliseconds(timerValue.getMilliseconds() + timerDuration);
-	Mojo.Log.error("Timer end time is: " + timerValue.toLocaleString());
-
-	//Store end time, in case we're killed and restarted and need to re-hydrate
-	appModel.AppSettingsCurrent["TimerRunning"] = true;
-	appModel.AppSettingsCurrent["TimerEndTime"] = timerValue.toLocaleString();
-	appModel.SaveSettings();
-
-	//Set the local timer value now, then repeatedly
-	//this.incrementTimer();
-	timerInterval = setInterval(this.incrementTimer, 1000);
 }
 
-TimerAssistant.prototype.incrementTimer = function(showTimerValue)
-{
-	//Increment timer
-	if (!showTimerValue)
+TimerAssistant.prototype.setup = function() {
+	Mojo.Log.info("## timer - scene started."); 
+	/* this function is for setup tasks that have to happen when the scene is first created */
+	
+	/* setup widgets here */
+	this.controller.get("timerViewTitle").innerHTML = "Timer";
+	this.controller.get("timerViewFace").innerHTML = timerResetValue;
+
+	this.btnStopHandler = this.btnStopHandler.bind(this);
+	this.controller.setupWidget('btnStop', this.attributes={}, this.model={label:"Stop", buttonClass: 'palm-button negative buttonfloat', disabled: true});
+
+	this.btnStartHandler = this.btnStartHandler.bind(this);
+	this.controller.setupWidget('btnStart', this.attributes={}, this.model={label:"Start", buttonClass: 'palm-button affirmative buttonfloat', disabled: true});
+
+	this.setupToggle('Sound');
+	this.setupToggle('Vibe');
+
+	this.propertyChanged = this.propertyChanged.bind(this);
+	this.controller.setupWidget("hour_field",
+		this.attributes = {
+			label: ' ',
+			labelPlacement: Mojo.Widget.labelPlacementRight,
+			modelProperty: 'value',
+			min: 0,
+			max: 23,
+			padNumbers: true
+		},
+		this.model = {
+			value: 0
+		}
+	); 
+	
+	this.controller.setupWidget("minute_field",
+		this.attributes = {
+			label: ' ',
+			labelPlacement: Mojo.Widget.labelPlacementLeft,
+			modelProperty: 'value',
+			min: 0,
+			max: 59,
+			padNumbers: true
+		},
+		this.model = {
+			value: 0
+		}
+	); 
+
+	this.controller.setupWidget("second_field",
+		this.attributes = {
+			label: ' ',
+			labelPlacement: Mojo.Widget.labelPlacementLeft,
+			modelProperty: 'value',
+			min: 0,
+			max: 59,
+			padNumbers: true
+		},
+		this.model = {
+			value: 0
+		}
+	);
+
+	this.controller.setupWidget("runningSpinner",
+		this.attributes = {
+			spinnerSize: "small"
+		},
+		this.model = {
+			spinning: true
+		}
+	);
+	
+	//App Menu (handled in stage controller: stage-assistant.js)
+	this.controller.setupWidget(Mojo.Menu.appMenu, Mojo.Controller.stageController.appMenuAttributes, Mojo.Controller.stageController.appMenuModel);
+
+	//Command Menu (buttons on the bottom)
+	this.cmdMenuAttributes = {
+		menuClass: 'watch-command-menu'
+	}
+	this.cmdMenuModel = {
+		visible: true,
+		items: [
+			{},
+			{
+				items: [
+					{iconPath: 'assets/count-up.png', command:'do-Stopwatch'},
+					{iconPath: 'assets/count-down.png', command:'do-Timer'}
+				],toggleCmd:'do-Timer', 
+			},
+			{}
+		]
+	};
+	this.controller.setupWidget(Mojo.Menu.commandMenu, this.cmdMenuAttributes, this.cmdMenuModel);	
+	Mojo.Log.info("## timer - scene setup done."); 
+};
+
+TimerAssistant.prototype.activate = function(event) {
+	Mojo.Log.info("Timer scene activated.");
+	document.getElementById("divTimerOptions").style.display = "block";
+	if (appModel.AlarmLaunch)
 	{
-		timerCount++;
-		
-		showTimerValue = Date.parse(appModel.AppSettingsCurrent["TimerEndTime"]) - new Date();
-		Mojo.Log.error("*** previously running timer delta from now: " + showTimerValue);
+		Mojo.Log.error("*** timer scene activated because of alarm");
+		appModel.AlarmLaunch = false;
+		this.timerDone();
+		this.setUIForReset();
 	}
 	else
 	{
-		//TODO: I don't think I need this
-		Mojo.Log.info("Updating timer using passed value " + showTimerValue);
-	}
-	try
-	{
-		if (showTimerValue < 1000)
+		Mojo.Log.error("*** timer scene launched without an alarm");
+		if (appModel.AppSettingsCurrent["TimerRunning"] == true && appModel.AppSettingsCurrent["TimerEndTime"] != "null")
 		{
-			clearInterval(timerInterval);
-			document.getElementById("timerViewFace").innerHTML = timerDefaultValue;
+			Mojo.Log.error("*** timer scene is attempting to re-hydrate a running timer");
+			var remainAlarmDifference = Date.parse(appModel.AppSettingsCurrent["TimerEndTime"]) - new Date();
+			Mojo.Log.error("*** previously running timer delta from now: " + remainAlarmDifference);
+			if (remainAlarmDifference > 0)
+			{
+				remainAlarmDifference = Number(remainAlarmDifference).toLongTimeValue();
+				remainAlarmDifference = remainAlarmDifference.split(":");
+				Mojo.Log.error("*** resuming remaining alarm timer: " + remainAlarmDifference);
+				//TODO: for some reason this ends up different from the system timer by a few seconds
+				this.startLocalTimer(remainAlarmDifference[0], remainAlarmDifference[1], remainAlarmDifference[2]);
+				this.setUIForRunning();
+			} 
+			else
+			{
+				Mojo.Log.error("*** timer scene is dicarding a previously running timer that has expired");
+				appModel.AppSettingsCurrent["TimerEndTime"] = "null";
+				appModel.AppSettingsCurrent["TimerRunning"] = false;
+				this.setUIForReset();
+			}
 		}
 		else
 		{
-			document.getElementById("timerViewFace").innerHTML = showTimerValue.toLongTimeValue();
-			document.getElementById('runningSpinner').style.display = "block";
+			Mojo.Log.error("*** timer scene has no active timers");
+			this.setUIForReset();
 		}
 	}
-	catch(error)
-	{
-		//won't be able to update if the scene is not active, but that's ok
-	}
-}
+	
+	/* put in event handlers here that should only be in effect when this scene is active. For
+	   example, key handlers that are observing the document */
+	Mojo.Event.listen(this.controller.get('btnStop'), Mojo.Event.tap, this.btnStopHandler);;
+	Mojo.Event.listen(this.controller.get('btnStart'), Mojo.Event.tap, this.btnStartHandler);
+	Mojo.Event.listen(this.controller.get('timerViewFace'), Mojo.Event.tap, this.timerFaceTapped);
+	Mojo.Event.listen(this.controller.get('hour_field'), Mojo.Event.propertyChange, this.propertyChanged);
+	Mojo.Event.listen(this.controller.get('minute_field'), Mojo.Event.propertyChange, this.propertyChanged);
+	Mojo.Event.listen(this.controller.get('second_field'), Mojo.Event.propertyChange, this.propertyChanged);
 
-TimerAssistant.prototype.timerDone = function()
-{
-	Mojo.Log.error("timer done called");
-
-	//Clear timers
-	clearInterval(timerInterval);
-	systemModel.ClearSystemAlarm("JonsTimer");
-	appModel.AppSettingsCurrent["TimerRunning"] = false;
-	appModel.AppSettingsCurrent["TimerEndTime"] = "null";
-	appModel.SaveSettings();
-
-	try
-	{
-		Mojo.Log.error("timer done is asking UI to reset");
-		this.setUIForReset();
-	}
-	catch (error)
-	{
-		Mojo.Log.error("timer done could not reset UI");
-		//will have to do this next time we activate
-	}
-}
+	Mojo.Additions.SetToggleState("att-toggle-Sound", appModel.AppSettingsCurrent["SoundEnabled"]);
+	Mojo.Additions.SetToggleState("att-toggle-Vibe", appModel.AppSettingsCurrent["VibeEnabled"]);
+};
 
 //UI event handlers
 TimerAssistant.prototype.btnStartHandler = function()
@@ -221,155 +284,6 @@ TimerAssistant.prototype.setupToggle = function (toggleName)
 	Mojo.Event.listen(this.controller.get('att-toggle-' + toggleName), Mojo.Event.propertyChange, this.togglePressed);
 }
 
-//Mojo interface implementations
-TimerAssistant.prototype.setup = function() {
-	Mojo.Log.info("## timer - scene started."); 
-	/* this function is for setup tasks that have to happen when the scene is first created */
-	
-	/* setup widgets here */
-	this.controller.get("timerViewTitle").innerHTML = "Timer";
-	this.controller.get("timerViewFace").innerHTML = timerResetValue;
-
-	this.btnStopHandler = this.btnStopHandler.bind(this);
-	this.controller.setupWidget('btnStop', this.attributes={}, this.model={label:"Stop", buttonClass: 'palm-button negative buttonfloat', disabled: true});
-
-	this.btnStartHandler = this.btnStartHandler.bind(this);
-	this.controller.setupWidget('btnStart', this.attributes={}, this.model={label:"Start", buttonClass: 'palm-button affirmative buttonfloat', disabled: true});
-
-	this.setupToggle('Sound');
-	this.setupToggle('Vibe');
-
-	this.propertyChanged = this.propertyChanged.bind(this);
-	this.controller.setupWidget("hour_field",
-		this.attributes = {
-			label: ' ',
-			labelPlacement: Mojo.Widget.labelPlacementRight,
-			modelProperty: 'value',
-			min: 0,
-			max: 23,
-			padNumbers: true
-		},
-		this.model = {
-			value: 0
-		}
-	); 
-	
-	this.controller.setupWidget("minute_field",
-		this.attributes = {
-			label: ' ',
-			labelPlacement: Mojo.Widget.labelPlacementLeft,
-			modelProperty: 'value',
-			min: 0,
-			max: 59,
-			padNumbers: true
-		},
-		this.model = {
-			value: 0
-		}
-	); 
-
-	this.controller.setupWidget("second_field",
-		this.attributes = {
-			label: ' ',
-			labelPlacement: Mojo.Widget.labelPlacementLeft,
-			modelProperty: 'value',
-			min: 0,
-			max: 59,
-			padNumbers: true
-		},
-		this.model = {
-			value: 0
-		}
-	);
-
-	this.controller.setupWidget("runningSpinner",
-		this.attributes = {
-			spinnerSize: "small"
-		},
-		this.model = {
-			spinning: true
-		}
-	);
-	
-	//App Menu (handled in stage controller: stage-assistant.js)
-	this.controller.setupWidget(Mojo.Menu.appMenu, {}, Mojo.Controller.stageController.appMenuModel);
-
-	//Command Menu (buttons on the bottom)
-	this.cmdMenuAttributes = {
-		menuClass: 'watch-command-menu'
-	}
-	this.cmdMenuModel = {
-		visible: true,
-		items: [
-			{},
-			{
-				items: [
-					{iconPath: 'assets/count-up.png', command:'do-Stopwatch'},
-					{iconPath: 'assets/count-down.png', command:'do-Timer'}
-				],toggleCmd:'do-Timer', 
-			},
-			{}
-		]
-	};
-	this.controller.setupWidget(Mojo.Menu.commandMenu, this.cmdMenuAttributes, this.cmdMenuModel);
-	
-	Mojo.Log.info("## timer - scene setup done."); 
-};
-
-TimerAssistant.prototype.activate = function(event) {
-	document.getElementById("divTimerOptions").style.display = "block";
-	if (appModel.AlarmLaunch)
-	{
-		Mojo.Log.error("*** timer scene activated because of alarm");
-		appModel.AlarmLaunch = false;
-		this.timerDone();
-		this.setUIForReset();
-	}
-	else
-	{
-		Mojo.Log.error("*** timer scene launched without an alarm");
-		if (appModel.AppSettingsCurrent["TimerRunning"] == true && appModel.AppSettingsCurrent["TimerEndTime"] != "null")
-		{
-			Mojo.Log.error("*** timer scene is attempting to re-hydrate a running timer");
-			var remainAlarmDifference = Date.parse(appModel.AppSettingsCurrent["TimerEndTime"]) - new Date();
-			Mojo.Log.error("*** previously running timer delta from now: " + remainAlarmDifference);
-			if (remainAlarmDifference > 0)
-			{
-				remainAlarmDifference = Number(remainAlarmDifference).toLongTimeValue();
-				remainAlarmDifference = remainAlarmDifference.split(":");
-				Mojo.Log.error("*** resuming remaining alarm timer: " + remainAlarmDifference);
-				//TODO: for some reason this ends up different from the system timer by a few seconds
-				this.startLocalTimer(remainAlarmDifference[0], remainAlarmDifference[1], remainAlarmDifference[2]);
-				this.setUIForRunning();
-			} 
-			else
-			{
-				Mojo.Log.error("*** timer scene is dicarding a previously running timer that has expired");
-				appModel.AppSettingsCurrent["TimerEndTime"] = "null";
-				appModel.AppSettingsCurrent["TimerRunning"] = false;
-				this.setUIForReset();
-			}
-		}
-		else
-		{
-			Mojo.Log.error("*** timer scene has no active timers");
-			this.setUIForReset();
-		}
-	}
-	
-	/* put in event handlers here that should only be in effect when this scene is active. For
-	   example, key handlers that are observing the document */
-	Mojo.Event.listen(this.controller.get('btnStop'), Mojo.Event.tap, this.btnStopHandler);;
-	Mojo.Event.listen(this.controller.get('btnStart'), Mojo.Event.tap, this.btnStartHandler);
-	Mojo.Event.listen(this.controller.get('timerViewFace'), Mojo.Event.tap, this.timerFaceTapped);
-	Mojo.Event.listen(this.controller.get('hour_field'), Mojo.Event.propertyChange, this.propertyChanged);
-	Mojo.Event.listen(this.controller.get('minute_field'), Mojo.Event.propertyChange, this.propertyChanged);
-	Mojo.Event.listen(this.controller.get('second_field'), Mojo.Event.propertyChange, this.propertyChanged);
-
-	Mojo.Additions.SetToggleState("att-toggle-Sound", appModel.AppSettingsCurrent["SoundEnabled"]);
-	Mojo.Additions.SetToggleState("att-toggle-Vibe", appModel.AppSettingsCurrent["VibeEnabled"]);
-};
-
 TimerAssistant.prototype.deactivate = function(event) {
 	/* remove any event handlers you added in activate and do any other cleanup that should happen before
 	   this scene is popped or another scene is pushed on top */
@@ -387,6 +301,89 @@ TimerAssistant.prototype.cleanup = function(event) {
 	/* this function should do any cleanup needed before the scene is destroyed as 
 	   a result of being popped off the scene stack */
 };
+
+//Timer functions
+TimerAssistant.prototype.startLocalTimer = function (Hours, Mins, Seconds)
+{
+	clearInterval(timerInterval);
+	//Start timers
+	timerCount = 0;
+	timerDuration = parseInt(((Hours * 60) * 60) * 1000);
+	timerDuration += parseInt((Mins * 60) * 1000);
+	timerDuration += parseInt(Seconds * 1000);
+
+	var timerValue = new Date();
+	Mojo.Log.error("Timer started at: " + timerValue);
+	Mojo.Log.error("Timer will end in: " + timerDuration + "ms");
+	timerValue.setMilliseconds(timerValue.getMilliseconds() + timerDuration);
+	Mojo.Log.error("Timer end time is: " + timerValue.toLocaleString());
+
+	//Store end time, in case we're killed and restarted and need to re-hydrate
+	appModel.AppSettingsCurrent["TimerRunning"] = true;
+	appModel.AppSettingsCurrent["TimerEndTime"] = timerValue.toLocaleString();
+	appModel.SaveSettings();
+
+	//Set the local timer value now, then repeatedly
+	//this.incrementTimer();
+	timerInterval = setInterval(this.incrementTimer, 1000);
+}
+
+TimerAssistant.prototype.incrementTimer = function(showTimerValue)
+{
+	//Increment timer
+	if (!showTimerValue)
+	{
+		timerCount++;
+		
+		showTimerValue = Date.parse(appModel.AppSettingsCurrent["TimerEndTime"]) - new Date();
+		Mojo.Log.error("*** previously running timer delta from now: " + showTimerValue);
+	}
+	else
+	{
+		//TODO: I don't think I need this
+		Mojo.Log.info("Updating timer using passed value " + showTimerValue);
+	}
+	try
+	{
+		if (showTimerValue < 1000)
+		{
+			clearInterval(timerInterval);
+			document.getElementById("timerViewFace").innerHTML = timerDefaultValue;
+		}
+		else
+		{
+			document.getElementById("timerViewFace").innerHTML = showTimerValue.toLongTimeValue();
+			document.getElementById('runningSpinner').style.display = "block";
+		}
+	}
+	catch(error)
+	{
+		//won't be able to update if the scene is not active, but that's ok
+	}
+}
+
+TimerAssistant.prototype.timerDone = function()
+{
+	Mojo.Log.error("timer done called");
+
+	//Clear timers
+	clearInterval(timerInterval);
+	systemModel.ClearSystemAlarm("JonsTimer");
+	appModel.AppSettingsCurrent["TimerRunning"] = false;
+	appModel.AppSettingsCurrent["TimerEndTime"] = "null";
+	appModel.SaveSettings();
+
+	try
+	{
+		Mojo.Log.error("timer done is asking UI to reset");
+		this.setUIForReset();
+	}
+	catch (error)
+	{
+		Mojo.Log.error("timer done could not reset UI");
+		//will have to do this next time we activate
+	}
+}
 
 //Helper functions
 Number.prototype.toLongTimeValue = function() {

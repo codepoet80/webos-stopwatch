@@ -19,21 +19,12 @@ AlarmAssistant.prototype.handleQuitButton = function(){
     var stageController = Mojo.Controller.appController.getStageController("");
     if (stageController)
     {
-        Mojo.Log.error("current scene is " + stageController.activeScene().sceneName);
         stageController.activate();
         if (stageController.activeScene().sceneName == "timer")
         {
-            //If the timer is in focus, we need to re-launch it so that it knows about the alarm
-            stageController.swapScene(
-            {
-                transition: Mojo.Transition.none,
-                name: "timer"
-            });
+            //Re-draw the timer scene now that its done
+            stageController.swapScene({transition: Mojo.Transition.none, name: "timer"});
         }
-    }
-    else
-    {
-        Mojo.Log.error("stage controller wasn't usable!");
     }
 }
 
