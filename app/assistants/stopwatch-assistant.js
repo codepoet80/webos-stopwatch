@@ -66,8 +66,19 @@ StopwatchAssistant.prototype.activate = function(event) {
 	else
 	{
 		this.setUIForStopped();
-		Mojo.Additions.DisableWidget("btnLapReset", true);
-		this.resetTimer();
+		if (appModel.AppSettingsCurrent["LapTimes"].length > 0)	//Display previous lap times, if available
+		{
+			for (var l=0;l<appModel.AppSettingsCurrent["LapTimes"].length;l++)
+			{
+				this.addLapToList(l+1, appModel.AppSettingsCurrent["LapTimes"][l], true);
+			}
+			Mojo.Additions.DisableWidget("btnStart", true);
+		}
+		else	//Otherwise, get ready for our next run
+		{
+			Mojo.Additions.DisableWidget("btnLapReset", true);
+			this.resetTimer();
+		}
 	}
 	
 	/* put in event handlers here that should only be in effect when this scene is active. For
@@ -90,6 +101,7 @@ StopwatchAssistant.prototype.btnStartHandler = function()
 	stopWatchTimerInterval = setInterval(this.incrementTimer, 100);
 	this.setUIForRunning();
 	systemModel.PlaySound("down2");
+	appModel.SaveSettings();
 }
 
 StopwatchAssistant.prototype.btnStopHandler = function()
@@ -108,6 +120,7 @@ StopwatchAssistant.prototype.btnStopHandler = function()
 	this.addLapToList(appModel.AppSettingsCurrent["LapTimes"].length, (appModel.AppSettingsCurrent["LapTimerValue"] / 100));
 	this.setUIForStopped();
 	systemModel.PlaySound("down2");
+	appModel.SaveSettings();
 }
 
 StopwatchAssistant.prototype.btnLapResetHandler = function()
@@ -124,6 +137,7 @@ StopwatchAssistant.prototype.btnLapResetHandler = function()
 		appModel.AppSettingsCurrent["LapStartTime"]=Date.now();
 		appModel.AppSettingsCurrent["LapTimerValue"]=0;
 		systemModel.PlaySound("up2");
+		appModel.SaveSettings();
 	}
 	else	//Reset Button
 	{
@@ -131,8 +145,10 @@ StopwatchAssistant.prototype.btnLapResetHandler = function()
 		this.stopTimer();
 		this.resetTimer();
 
+		this.setUIForStopped();
 		Mojo.Additions.DisableWidget("btnLapReset", true);
 		systemModel.PlaySound("delete_01");
+		appModel.SaveSettings();
 	}
 }
 
@@ -297,12 +313,11 @@ StopwatchAssistant.prototype.resetTimer = function()
 	//Reset global variables
 	stopWatchTimerInterval = false;
 	lapTimerOffset=0;
-	stopWatchTimerValue=timerStartValue;
+	stopWatchTimerValue=0;
 	appModel.AppSettingsCurrent["LapCount"] = 0;
 	appModel.AppSettingsCurrent["LapTimerValue"]=0;
 	appModel.AppSettingsCurrent["LapTimes"].length = 0;
 	appModel.AppSettingsCurrent["running"] = false;
-	appModel.SaveSettings();
 
 	//Reset the timer face
 	this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValueMS();
