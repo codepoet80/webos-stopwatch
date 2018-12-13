@@ -19,8 +19,13 @@ var AppModel = function()
 		Debug: false,
         VibeEnabled: true,
 		SoundEnabled: false,
+		StopWatchRunning: false,
+		StopWatchStartTime: 0,
+		LapStartTime: 0,
+		LapTimerValue: 0,
+		LapTimes: [],
 		TimerRunning: false,
-		TimerEndTime: "null"
+		TimerEndTime: "null",
     };
 }
 

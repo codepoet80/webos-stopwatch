@@ -1,12 +1,7 @@
 //Globals
-var running=false;
 var timerStartValue=0;	//Value to start the timer at (non-0 for debugging)
-var stopWatchStartTime=0;	//TODO: Replace this with a cookie so we can use on re-launch
-var stopWatchTimerValue=0;
-var lapStartTime=0;	
-var lapTimerValue=0;
-var lapCount = 0; //Value to start the laps at (non-0 for debugging)
-var stopWatchTimerInterval;
+var stopWatchTimerValue=0;	
+var stopWatchTimerInterval = false;
 var lapDivEmptyHTML = "<table class='watchLap'><tr><td>&nbsp;</td></tr></table>";
 
 function StopwatchAssistant() {
@@ -58,17 +53,21 @@ StopwatchAssistant.prototype.setup = function() {
 
 StopwatchAssistant.prototype.activate = function(event) {
 	Mojo.Log.info("Stopwatch scene activated.");
-	if (running)	//If we came back to this scene when the timer was already running
+	if (appModel.AppSettingsCurrent["running"])	//If we came back to this scene when the timer was already running
 	{
+		Mojo.Log.warn("Re-activating running stopwatch!");
+		if (!stopWatchTimerInterval)
+		{
+			Mojo.Log.warn("Activating stopwatch timer!");
+			stopWatchTimerInterval = setInterval(this.incrementTimer, 100);
+		}
 		this.setUIForRunning();
-		//TODO: Need to re-draw lap rows too
 	}
 	else
 	{
 		this.setUIForStopped();
-		//Reset counters
-		stopWatchTimerValue = timerStartValue;
-		lapCount = 0;
+		Mojo.Additions.DisableWidget("btnLapReset", true);
+		this.resetTimer();
 	}
 	
 	/* put in event handlers here that should only be in effect when this scene is active. For
@@ -83,11 +82,11 @@ StopwatchAssistant.prototype.activate = function(event) {
 StopwatchAssistant.prototype.btnStartHandler = function()
 {
 	Mojo.Log.info("starting timer at " + stopWatchTimerValue)
-	running = true;
+	appModel.AppSettingsCurrent["running"] = true;
 
 	//Record start times and start timers
-	stopWatchStartTime = Date.now();
-	lapStartTime = Date.now();
+	appModel.AppSettingsCurrent["StopWatchStartTime"] = Date.now();
+	appModel.AppSettingsCurrent["LapStartTime"] = Date.now();
 	stopWatchTimerInterval = setInterval(this.incrementTimer, 100);
 	this.setUIForRunning();
 	systemModel.PlaySound("down2");
@@ -96,7 +95,7 @@ StopwatchAssistant.prototype.btnStartHandler = function()
 StopwatchAssistant.prototype.btnStopHandler = function()
 {
 	Mojo.Log.info("The Stop button was pressed.");
-	running = false;
+	appModel.AppSettingsCurrent["running"] = false;
 	this.stopTimer();
 
 	//Update watch face
@@ -104,52 +103,41 @@ StopwatchAssistant.prototype.btnStopHandler = function()
 	document.getElementById("watchViewDetail").innerHTML = stoppedTime.toLongTimeValueMS();
 	
 	//Update laps
-	var lapTimerOffset = Date.now() - lapStartTime;
-	lapTimerValue = lapTimerValue + lapTimerOffset;;
-	this.addLapToList(lapCount+1, (lapTimerValue / 100));
+	var lapTimerOffset = Date.now() - appModel.AppSettingsCurrent["LapStartTime"];
+	appModel.AppSettingsCurrent["LapTimerValue"] = appModel.AppSettingsCurrent["LapTimerValue"] + lapTimerOffset;;
+	this.addLapToList(appModel.AppSettingsCurrent["LapTimes"].length, (appModel.AppSettingsCurrent["LapTimerValue"] / 100));
 	this.setUIForStopped();
 	systemModel.PlaySound("down2");
 }
 
 StopwatchAssistant.prototype.btnLapResetHandler = function()
 {
-	if (running)	//Lap Button
+	if (appModel.AppSettingsCurrent["running"])	//Lap Button
 	{
 		Mojo.Log.info("The Lap button was pressed.");
-		var lapTimerOffset = Date.now() - lapStartTime;
-		lapTimerValue = lapTimerValue + lapTimerOffset;;
-		this.addLapToList(lapCount+1, (lapTimerValue / 100));
+		var lapTimerOffset = Date.now() - appModel.AppSettingsCurrent["LapStartTime"];
+		appModel.AppSettingsCurrent["LapTimerValue"] = appModel.AppSettingsCurrent["LapTimerValue"] + lapTimerOffset;;
+		this.addLapToList(appModel.AppSettingsCurrent["LapTimes"].length+1, (appModel.AppSettingsCurrent["LapTimerValue"] / 100));
 		
 		//Increment laps
-		lapStartTime=Date.now();
 		lapTimerOffset=0;
-		lapTimerValue=0;
-		lapCount++;
+		appModel.AppSettingsCurrent["LapStartTime"]=Date.now();
+		appModel.AppSettingsCurrent["LapTimerValue"]=0;
 		systemModel.PlaySound("up2");
 	}
 	else	//Reset Button
 	{
 		Mojo.Log.info("The Reset button was pressed.");
 		this.stopTimer();
-		running = false;
+		this.resetTimer();
 
-		//Reset global variables
-		lapTimerOffset=0;
-		lapTimerValue=0;
-		lapCount = 0;
-		stopWatchTimerValue=timerStartValue;
 		Mojo.Additions.DisableWidget("btnLapReset", true);
-
-		//Reset the timer
-		this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValueMS();
-		this.controller.get("watchLapTimes").innerHTML = "";
-		this.controller.get("watchLapPlaceholder").innerHTML = lapDivEmptyHTML + lapDivEmptyHTML;
 		systemModel.PlaySound("delete_01");
 	}
 }
 
 //UI manipulation functions
-StopwatchAssistant.prototype.addLapToList = function(showLap, timerValue) 
+StopwatchAssistant.prototype.addLapToList = function(showLap, timerValue, rehydrate) 
 {
 	var rowTables = document.getElementById("watchLapTimes").children;
 	var rowExists = false;
@@ -160,6 +148,8 @@ StopwatchAssistant.prototype.addLapToList = function(showLap, timerValue)
 		{
 			rowExists = true;
 			Mojo.Log.info("Updating existing lap row " + showLap + " with time " + timerValue);
+			if (!rehydrate)	//store the lap in cookie (if its not already there)
+				appModel.AppSettingsCurrent["LapTimes"][showLap] = timerValue;
 			var countColumn = rowTables[i].getElementsByClassName("rightLap");
 			for (var j=0; j < countColumn.length; j++)
 			{
@@ -173,6 +163,8 @@ StopwatchAssistant.prototype.addLapToList = function(showLap, timerValue)
 	if (!rowExists)
 	{
 		Mojo.Log.info("Creating new lap row " + showLap + " with time " + timerValue);
+		if (!rehydrate)	//store the lap in cookie (if its not already there)
+			appModel.AppSettingsCurrent["LapTimes"].push(timerValue);
 		var newLap = "<table class='watchLap' id='Lap" + showLap + "'><tr><td class='leftLap'>Lap " + 
 			showLap + "</td><td class='rightLap' title='" + timerValue.toString() + "'>" + 
 			Number(timerValue).toLongTimeValueMS() + "</td></tr></table>";
@@ -185,6 +177,7 @@ StopwatchAssistant.prototype.addLapToList = function(showLap, timerValue)
 		this.controller.get("watchLapPlaceholder").innerHTML = "";
 
 	//Update lap colors
+	appModel.SaveSettings();
 	this.updateBestWorstLaps();
 }
 
@@ -235,6 +228,11 @@ StopwatchAssistant.prototype.setUIForRunning = function()
 	Mojo.Additions.DisableWidget("btnStart", true);
 	Mojo.Additions.DisableWidget("btnLapReset", false);
 	Mojo.Additions.DisableWidget("btnStop", false);
+	//Re-draw laps
+	for (var l=0;l<appModel.AppSettingsCurrent["LapTimes"].length;l++)
+	{
+		this.addLapToList(l+1, appModel.AppSettingsCurrent["LapTimes"][l], true);
+	}
 }
 
 StopwatchAssistant.prototype.setUIForStopped = function()
@@ -249,13 +247,14 @@ StopwatchAssistant.prototype.setUIForStopped = function()
 
 StopwatchAssistant.prototype.deactivate = function(event) {
 	Mojo.Log.info("Stopwatch scene deactivated.");
+	systemModel.AllowDisplaySleep();
+	appModel.SaveSettings();
 	/* remove any event handlers you added in activate and do any other cleanup that should happen before
 	   this scene is popped or another scene is pushed on top */
 	
 	Mojo.Event.stopListening(this.controller.get('btnStop'),Mojo.Event.tap, this.btnStopHandler)
 	Mojo.Event.stopListening(this.controller.get('btnLapReset'),Mojo.Event.tap, this.btnLapResetHandler)
 	Mojo.Event.stopListening(this.controller.get('btnStart'),Mojo.Event.tap, this.btnStartHandler)
-	systemModel.AllowDisplaySleep();
 };
 
 StopwatchAssistant.prototype.cleanup = function(event) {
@@ -268,8 +267,8 @@ StopwatchAssistant.prototype.cleanup = function(event) {
 StopwatchAssistant.prototype.incrementTimer = function()
 {
 	//Increment timer
-	running = true;
-	var stopwatchTimerOffset = Date.now() - stopWatchStartTime;
+	appModel.AppSettingsCurrent["running"] = true;
+	var stopwatchTimerOffset = Date.now() - appModel.AppSettingsCurrent["StopWatchStartTime"];
 	var showTimerValue = stopWatchTimerValue + stopwatchTimerOffset;
 	try
 	{
@@ -285,11 +284,30 @@ StopwatchAssistant.prototype.stopTimer = function()
 {
 	//Stop Timer
 	Mojo.Log.info("Stopping timer.");
-	running = false;
+	appModel.AppSettingsCurrent["running"] = false;
 	clearInterval(stopWatchTimerInterval);
+	stopWatchTimerInterval = false;
 
-	var stopwatchTimerOffset = Date.now() - stopWatchStartTime;
+	var stopwatchTimerOffset = Date.now() - appModel.AppSettingsCurrent["StopWatchStartTime"];
 	stopWatchTimerValue = stopWatchTimerValue + stopwatchTimerOffset;
+}
+
+StopwatchAssistant.prototype.resetTimer = function()
+{
+	//Reset global variables
+	stopWatchTimerInterval = false;
+	lapTimerOffset=0;
+	stopWatchTimerValue=timerStartValue;
+	appModel.AppSettingsCurrent["LapCount"] = 0;
+	appModel.AppSettingsCurrent["LapTimerValue"]=0;
+	appModel.AppSettingsCurrent["LapTimes"].length = 0;
+	appModel.AppSettingsCurrent["running"] = false;
+	appModel.SaveSettings();
+
+	//Reset the timer face
+	this.controller.get("watchViewDetail").innerHTML = timerStartValue.toLongTimeValueMS();
+	this.controller.get("watchLapTimes").innerHTML = "";
+	this.controller.get("watchLapPlaceholder").innerHTML = lapDivEmptyHTML + lapDivEmptyHTML;
 }
 
 //Helper functions
