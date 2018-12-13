@@ -108,7 +108,7 @@ StopwatchAssistant.prototype.btnStopHandler = function()
 {
 	Mojo.Log.info("The Stop button was pressed.");
 	appModel.AppSettingsCurrent["running"] = false;
-	this.stopTimer();
+	stopTimer();
 
 	//Update watch face
 	var	stoppedTime = Number(stopWatchTimerValue / 100);
@@ -142,7 +142,7 @@ StopwatchAssistant.prototype.btnLapResetHandler = function()
 	else	//Reset Button
 	{
 		Mojo.Log.info("The Reset button was pressed.");
-		this.stopTimer();
+		stopTimer();
 		this.resetTimer();
 
 		this.setUIForStopped();
@@ -288,7 +288,16 @@ StopwatchAssistant.prototype.incrementTimer = function()
 	var showTimerValue = stopWatchTimerValue + stopwatchTimerOffset;
 	try
 	{
-		document.getElementById("watchViewDetail").innerHTML = (showTimerValue / 100).toLongTimeValueMS();
+		if (showTimerValue < 5999999)
+		{
+			document.getElementById("watchViewDetail").innerHTML = (showTimerValue / 100).toLongTimeValueMS();
+		}
+		else
+		{
+			Mojo.Log.error("stopwatch full at " + showTimerValue);
+			stopTimer();
+			Mojo.Additions.ShowDialogBox("Stopwatch", "Wow! you've got lots of stamina! Unfortunately that's as high as this stopwatch can go...");
+		}
 	}
 	catch (error)
 	{
@@ -296,14 +305,14 @@ StopwatchAssistant.prototype.incrementTimer = function()
 	}
 }
 
-StopwatchAssistant.prototype.stopTimer = function()
+stopTimer = function()
 {
 	//Stop Timer
 	Mojo.Log.info("Stopping timer.");
-	appModel.AppSettingsCurrent["running"] = false;
 	clearInterval(stopWatchTimerInterval);
 	stopWatchTimerInterval = false;
-
+	
+	appModel.AppSettingsCurrent["running"] = false;
 	var stopwatchTimerOffset = Date.now() - appModel.AppSettingsCurrent["StopWatchStartTime"];
 	stopWatchTimerValue = stopWatchTimerValue + stopwatchTimerOffset;
 }
@@ -352,3 +361,4 @@ Number.prototype.toLongTimeValueMS = function() {
 	//Return formatted string
 	return minutes + ":" + seconds + "." + milliseconds;
 }
+

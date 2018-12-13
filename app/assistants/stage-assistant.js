@@ -38,7 +38,10 @@ StageAssistant.prototype.launchWithAlarm = function(AlarmName)
 	stageController.swapScene({transition: Mojo.Transition.none, name: "timer"});
 	
 	//Show alert stage
-	systemModel.ShowNotificationStage("alarm", "timer/alarm-scene", 150, appModel.AppSettingsCurrent["SoundEnabled"], appModel.AppSettingsCurrent["VibeEnabled"]);
+	vibeTimes = false;
+	if (appModel.AppSettingsCurrent["VibeEnabled"] == true)
+		vibeTimes = 5;
+	systemModel.ShowNotificationStage("alarm", "timer/alarm-scene", 150, appModel.AppSettingsCurrent["SoundEnabled"], vibeTimes);
 }
 
 //Since the app menu and buttons are common to both scenes, we'll handle them in the stage
@@ -50,23 +53,16 @@ StageAssistant.prototype.handleCommand = function(event)
 	if(event.type == Mojo.Event.command) {
 		switch(event.command) {
 			case 'do-myAbout':
-			currentScene.showAlertDialog({
-					onChoose: function(value) {},
-					title: $L("Stopwatch"),
-					message: $L("Copyright 2018, Jonathan Wise. Available under an MIT License. Source code available at: https://github.com/codepoet80/webos-stopwatch"),
-					choices:[
-						{label:$L("OK"), value:""}
-					]
-				});
+			{
+				Mojo.Additions.ShowDialogBox("Stopwatch", "Copyright 2018, Jonathan Wise. Available under an MIT License. Source code available at: https://github.com/codepoet80/webos-stopwatch");
 				break;
-
+			}
 			case 'do-Timer':
 			{
 				if (currentScene.sceneName != "timer")
 					stageController.swapScene({transition: Mojo.Transition.crossFade, name: "timer"});
 				break;	
 			}
-
 			case 'do-Stopwatch':
 			{
 				if (currentScene.sceneName != "stopwatch")
