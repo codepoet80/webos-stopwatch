@@ -13,3 +13,4 @@ https://forums.webosnation.com/webos-development/332259-fumbling-my-way-through-
 - 0.1.1 - Both modes mostly working
 - 0.1.3 - Resolves an issue where timer wouldn't reset in certain launch situtations
 - 1.0.0 - Stopwatch now survives the app being killed and re-launched, laps survive scene changes
+- 1.0.1 - Support really long stopwatch times

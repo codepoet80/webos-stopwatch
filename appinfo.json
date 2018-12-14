@@ -1,6 +1,6 @@
 {
 	"id": "com.jonandnic.webos.stopwatch",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"vendor": "Jonathan Wise",
 	"type": "web",
 	"main": "index.html",
