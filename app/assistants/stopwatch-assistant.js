@@ -1,7 +1,10 @@
 //Globals
 var timerStartValue=0;	//Value to start the timer at (non-0 for debugging)
 var stopWatchTimerValue=0;	
-var stopWatchMaxValue=5999999;
+var stopWatchSizeChangeValue=5999999;
+var stopWatchSmallFont="3.5em";
+var stopWatchNormalFont="4.5em";
+var stopWatchMaxValue=599999999;
 var stopWatchTimerInterval = false;
 var lapDivEmptyHTML = "<table class='watchLap'><tr><td>&nbsp;</td></tr></table>";
 
@@ -57,12 +60,18 @@ StopwatchAssistant.prototype.activate = function(event) {
 	if (appModel.AppSettingsCurrent["running"])	//If we came back to this scene when the timer was already running
 	{
 		var stopwatchTimerOffset = Date.now() - appModel.AppSettingsCurrent["StopWatchStartTime"];
+		var watchFace = document.getElementById("watchViewDetail");
+		if (stopwatchTimerOffset >= stopWatchSizeChangeValue)
+			watchFace.style.fontSize = stopWatchSmallFont;
+		else
+			watchFace.style.fontSize = stopWatchNormalFont;
+
 		if (stopwatchTimerOffset >= stopWatchMaxValue)
 		{
 			Mojo.Log.warn("Not re-activating a full stopwatch!");
 			stopTimer();
 			this.setUIForStopped();
-			document.getElementById("watchViewDetail").innerHTML = (5999999 / 100).toLongTimeValueMS();
+			watchFace.innerHTML = (stopWatchMaxValue / 100).toLongTimeValueMS();
 			Mojo.Additions.ShowDialogBox("Stopwatch", "Wow! you've got lots of stamina! Unfortunately that's as high as this stopwatch can go...");
 			stopWatchTimerInterval = false;
 			lapTimerOffset=0;
@@ -305,15 +314,21 @@ StopwatchAssistant.prototype.incrementTimer = function()
 	var showTimerValue = stopWatchTimerValue + stopwatchTimerOffset;
 	try
 	{
-		if (showTimerValue < stopWatchMaxValue)
+		var watchFace = document.getElementById("watchViewDetail");
+		if (showTimerValue >= stopWatchSizeChangeValue && watchFace.style.fontSize != stopWatchSmallFont)
 		{
-			document.getElementById("watchViewDetail").innerHTML = (showTimerValue / 100).toLongTimeValueMS();
+			Mojo.Log.error("stopwatch needs resize at " + showTimerValue);
+			Mojo.Controller.stageController.swapScene({transition: Mojo.Transition.none, name: "stopwatch"});
+		}
+		else if (showTimerValue >= stopWatchMaxValue)
+		{
+			Mojo.Log.error("stopwatch full at " + showTimerValue);
+			stopTimer();
+			Mojo.Controller.stageController.swapScene({transition: Mojo.Transition.none, name: "stopwatch"});	
 		}
 		else
 		{
-			Mojo.Log.error("stopwatch full at " + showTimerValue);
-			//stopTimer();
-			Mojo.Controller.stageController.swapScene({transition: Mojo.Transition.none, name: "stopwatch"});
+			watchFace.innerHTML = (showTimerValue / 100).toLongTimeValueMS();
 		}
 	}
 	catch (error)

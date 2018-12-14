@@ -11,23 +11,8 @@ body{
     font-size: 4.5em;
     text-align: center;
 }
-.timerFace {
-    height: 80px;
-    margin-top: 91px;
-    margin-bottom: 19px;
-    font-family: "Lucida Console", Monaco, monospace;
-    font-stretch: expanded;
-    font-size: 4.0em;
-    text-align: center;
-}
-.timerPicker {
-    height: 80px;
-    margin-top: 90px;
-    margin-bottom: 20px;
-    text-align: center;
-}
-.timerOptions {
-    display: none;
+.watchFaceSmaller {
+    font-size: 3.5em;
 }
 .watchButtons {
     margin-bottom: 10px;
@@ -64,6 +49,24 @@ body{
 }
 .rightLap.low {
     color: green;
+}
+.timerFace {
+    height: 80px;
+    margin-top: 91px;
+    margin-bottom: 19px;
+    font-family: "Lucida Console", Monaco, monospace;
+    font-stretch: expanded;
+    font-size: 4.0em;
+    text-align: center;
+}
+.timerPicker {
+    height: 80px;
+    margin-top: 90px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+.timerOptions {
+    display: none;
 }
 .timerPickerContainer
 {
