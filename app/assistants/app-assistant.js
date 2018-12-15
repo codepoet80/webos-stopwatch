@@ -17,7 +17,8 @@ AppAssistant.prototype.handleLaunch = function(params) {
 	
 	//get the proxy for the stage in the event it already exists (eg: app is currently open)
 	var mainStage = this.controller.getStageProxy("");
-	Mojo.Log.info("Stopwatch App is Launching");
+	Mojo.Log.info("Stopwatch App is Launching! Launch params: " + JSON.stringify(params));
+
 	if (!params || params["action"] == undefined)	//If no parameters were passed, this is a normal launch
 	{	
 		Mojo.Log.info("This is a normal launch");

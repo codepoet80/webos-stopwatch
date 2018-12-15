@@ -77,6 +77,19 @@ TimerAssistant.prototype.setup = function() {
 			spinning: true
 		}
 	);
+
+	//Setup sound picker
+	this.controller.setupWidget("drawerSound",
+		this.attributes = {
+			modelProperty: 'open',
+			unstyled: false
+		},
+		this.model = {
+			open: appModel.AppSettingsCurrent["SoundEnabled"]
+		}
+	);
+	this.controller.get('SoundOptionLabel').textContent = "Play Sound: " + appModel.AppSettingsCurrent["AlarmName"];
+	this.controller.get('SoundOptionLabel').observe(Mojo.Event.tap, this.setAlarmSound);
 	
 	//App Menu (handled in stage controller: stage-assistant.js)
 	this.controller.setupWidget(Mojo.Menu.appMenu, Mojo.Controller.stageController.appMenuAttributes, Mojo.Controller.stageController.appMenuModel);
@@ -231,6 +244,21 @@ TimerAssistant.prototype.togglePressed = function(event){
 		appModel.AppSettingsCurrent[findSettingName] = false;
 	appModel.SaveSettings();
 	Mojo.Log.error("**** Settings when toggle pressed: " + JSON.stringify(appModel.AppSettingsCurrent));
+}
+
+// opens ringtone picker.
+TimerAssistant.prototype.setAlarmSound = function() {
+	var self = this.controller; //Retain the reference for the callback
+	var params = { defaultKind: 'ringtone',
+		onSelect: function(file){
+			var fileToUse = file.fullPath.replace("/media/internal/ringtones/", "").replace(".mp3", "");
+			appModel.AppSettingsCurrent["AlarmName"] = fileToUse;
+			document.getElementById('SoundOptionLabel').innerHTML = "Play Sound: " + appModel.AppSettingsCurrent["AlarmName"];
+			appModel.SaveSettings();
+			Mojo.Log.info("alarm sound changed to: " + fileToUse);
+		}
+	}
+	Mojo.FilePicker.pickFile(params, Mojo.Controller.stageController);
 }
 
 //UI manipulation functions

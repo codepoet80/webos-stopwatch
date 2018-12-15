@@ -317,7 +317,7 @@ StopwatchAssistant.prototype.incrementTimer = function()
 		var watchFace = document.getElementById("watchViewDetail");
 		if (showTimerValue >= stopWatchSizeChangeValue && watchFace.style.fontSize != stopWatchSmallFont)
 		{
-			Mojo.Log.error("stopwatch needs resize at " + showTimerValue);
+			Mojo.Log.warn("stopwatch needs resize at " + showTimerValue);
 			Mojo.Controller.stageController.swapScene({transition: Mojo.Transition.none, name: "stopwatch"});
 		}
 		else if (showTimerValue >= stopWatchMaxValue)

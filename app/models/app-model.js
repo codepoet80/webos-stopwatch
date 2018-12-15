@@ -17,8 +17,6 @@ var AppModel = function()
     //Define cookie defaults here and they will be loaded and enforced below
     this.AppSettingsDefaults = {
 		Debug: false,
-        VibeEnabled: true,
-		SoundEnabled: false,
 		StopWatchRunning: false,
 		StopWatchStartTime: 0,
 		LapStartTime: 0,
@@ -26,6 +24,9 @@ var AppModel = function()
 		LapTimes: [],
 		TimerRunning: false,
 		TimerEndTime: "null",
+		VibeEnabled: false,
+		SoundEnabled: true,
+		AlarmName: "Pre"
     };
 }
 
@@ -41,7 +42,7 @@ AppModel.prototype.LoadSettings = function () {
 	{
 		appSettings = settingsCookie.get();
 		if (typeof appSettings == "undefined" || appSettings == null || !this.checkSettingsValid(appSettings)) {
-			Mojo.Log.error("** Using first run default settings");
+			Mojo.Log.warn("** Using first run default settings");
 		}
 		else
 		{

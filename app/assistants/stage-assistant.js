@@ -41,7 +41,11 @@ StageAssistant.prototype.launchWithAlarm = function(AlarmName)
 	vibeTimes = false;
 	if (appModel.AppSettingsCurrent["VibeEnabled"] == true)
 		vibeTimes = 5;
-	systemModel.ShowNotificationStage("alarm", "timer/alarm-scene", 150, appModel.AppSettingsCurrent["SoundEnabled"], vibeTimes);
+	var useSound = false;
+	if (appModel.AppSettingsCurrent["SoundEnabled"])
+		useSound = "/media/internal/ringtones/" + appModel.AppSettingsCurrent["AlarmName"] + ".mp3";
+	Mojo.Log.warn("using sound file " + useSound);
+	systemModel.ShowNotificationStage("alarm", "timer/alarm-scene", 150, useSound, vibeTimes);
 }
 
 //Since the app menu and buttons are common to both scenes, we'll handle them in the stage
