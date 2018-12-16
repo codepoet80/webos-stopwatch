@@ -12,12 +12,6 @@ StageAssistant.prototype.setup = function()
 	var stageController = Mojo.Controller.stageController;
 	stageController.launchWithAlarm = this.launchWithAlarm;
 
-	//Setup App Menu
-	stageController.appMenuAttributes = {omitDefaultItems: true};
-	stageController.appMenuModel = {
-		items: [{label: "About Stopwatch", command: 'do-myAbout'}]
-	};
-
 	//Figure out how we were launched
 	if (appModel.AlarmLaunch)
 	{
@@ -53,12 +47,21 @@ StageAssistant.prototype.handleCommand = function(event)
 {
 	var currentScene = Mojo.Controller.stageController.activeScene();
 	var stageController = Mojo.Controller.stageController;
-
+	var appController = Mojo.Controller.getAppController();
 	if(event.type == Mojo.Event.command) {
 		switch(event.command) {
 			case 'do-myAbout':
 			{
 				Mojo.Additions.ShowDialogBox("Stopwatch", "Copyright 2018, Jonathan Wise. Available under an MIT License. Source code available at: https://github.com/codepoet80/webos-stopwatch");
+				break;
+			}
+			case 'do-stayAwake':
+			{
+				if (appModel.AppSettingsCurrent["StayAwake"] == true)
+					appModel.AppSettingsCurrent["StayAwake"] = false;
+				else
+					appModel.AppSettingsCurrent["StayAwake"] = true;			
+				stageController.swapScene({transition: Mojo.Transition.none, name: currentScene.sceneName});
 				break;
 			}
 			case 'do-Timer':

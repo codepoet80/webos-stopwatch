@@ -17,6 +17,7 @@ var AppModel = function()
     //Define cookie defaults here and they will be loaded and enforced below
     this.AppSettingsDefaults = {
 		Debug: false,
+		StayAwake: false,
 		StopWatchRunning: false,
 		StopWatchStartTime: 0,
 		LapStartTime: 0,

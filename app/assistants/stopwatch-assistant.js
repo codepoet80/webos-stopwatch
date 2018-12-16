@@ -31,8 +31,13 @@ StopwatchAssistant.prototype.setup = function() {
 	this.controller.setupWidget('btnStart', this.attributes={}, this.model={label:"Start", buttonClass: 'palm-button affirmative buttonfloat', disabled: false});
 	this.btnStartHandler = this.btnStartHandler.bind(this);
 
-	//App Menu (handled in stage controller: stage-assistant.js)
-	this.controller.setupWidget(Mojo.Menu.appMenu, Mojo.Controller.stageController.appMenuAttributes, Mojo.Controller.stageController.appMenuModel);
+	//Setup App Menu
+	this.appMenuAttributes = {omitDefaultItems: true};
+	this.appMenuModel = {
+		items: [{label: "Awake while Running", checkEnabled: true, command: 'do-stayAwake', chosen:appModel.AppSettingsCurrent["StayAwake"]},
+		{label: "About Stopwatch", command: 'do-myAbout'}]
+	};
+	this.controller.setupWidget(Mojo.Menu.appMenu, this.appMenuAttributes, this.appMenuModel);
 
 	//Command Menu (buttons on the bottom)
 	this.cmdMenuAttributes = {
@@ -264,7 +269,12 @@ StopwatchAssistant.prototype.updateBestWorstLaps = function()
 
 StopwatchAssistant.prototype.setUIForRunning = function()
 {
-	systemModel.PreventDisplaySleep();
+	var appController = Mojo.Controller.getAppController();
+	if (appModel.AppSettingsCurrent["StayAwake"])
+	{
+		systemModel.PreventDisplaySleep();
+		appController.showBanner("Screen will stay on while running", {source: 'notification'});
+	}
 	//Update Widgets
 	Mojo.Additions.SetWidgetLabel("btnLapReset", "Lap");
 	Mojo.Additions.DisableWidget("btnStart", true);
@@ -293,7 +303,6 @@ StopwatchAssistant.prototype.deactivate = function(event) {
 	appModel.SaveSettings();
 	/* remove any event handlers you added in activate and do any other cleanup that should happen before
 	   this scene is popped or another scene is pushed on top */
-	
 	Mojo.Event.stopListening(this.controller.get('btnStop'),Mojo.Event.tap, this.btnStopHandler)
 	Mojo.Event.stopListening(this.controller.get('btnLapReset'),Mojo.Event.tap, this.btnLapResetHandler)
 	Mojo.Event.stopListening(this.controller.get('btnStart'),Mojo.Event.tap, this.btnStartHandler)
@@ -302,7 +311,6 @@ StopwatchAssistant.prototype.deactivate = function(event) {
 StopwatchAssistant.prototype.cleanup = function(event) {
 	/* this function should do any cleanup needed before the scene is destroyed as 
 	   a result of being popped off the scene stack */
-	systemModel.AllowDisplaySleep();
 };
 
 //Timer functions
@@ -351,6 +359,7 @@ stopTimer = function()
 
 StopwatchAssistant.prototype.resetTimer = function()
 {
+	systemModel.AllowDisplaySleep();
 	//Reset global variables
 	stopWatchTimerInterval = false;
 	lapTimerOffset=0;

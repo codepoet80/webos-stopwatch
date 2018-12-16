@@ -91,8 +91,13 @@ TimerAssistant.prototype.setup = function() {
 	this.controller.get('SoundOptionLabel').textContent = "Play Sound: " + appModel.AppSettingsCurrent["AlarmName"];
 	this.controller.get('SoundOptionLabel').observe(Mojo.Event.tap, this.setAlarmSound);
 	
-	//App Menu (handled in stage controller: stage-assistant.js)
-	this.controller.setupWidget(Mojo.Menu.appMenu, Mojo.Controller.stageController.appMenuAttributes, Mojo.Controller.stageController.appMenuModel);
+	//Setup App Menu
+	this.appMenuAttributes = {omitDefaultItems: true};
+	this.appMenuModel = {
+		items: [{label: "Awake while Running", checkEnabled: true, command: 'do-stayAwake', chosen:appModel.AppSettingsCurrent["StayAwake"]},
+		{label: "About Stopwatch", command: 'do-myAbout'}]
+	};
+	this.controller.setupWidget(Mojo.Menu.appMenu, this.appMenuAttributes, this.appMenuModel);
 
 	//Command Menu (buttons on the bottom)
 	this.cmdMenuAttributes = {
@@ -213,9 +218,12 @@ TimerAssistant.prototype.btnStopHandler = function()
 
 TimerAssistant.prototype.timerFaceTapped = function(event){
 	Mojo.Log.info("## timer - the watch face was tapped");
-	document.getElementById('timerViewFace').style.display = "none";
-	document.getElementById('timerViewPicker').style.display = "block";
-	Mojo.Log.error("## timer - visibility was toggled");
+	if (!appModel.AppSettingsCurrent["TimerRunning"])
+	{
+		document.getElementById('timerViewFace').style.display = "none";
+		document.getElementById('timerViewPicker').style.display = "block";
+		Mojo.Log.error("## timer - visibility was toggled");
+	}
 }
 
 TimerAssistant.prototype.propertyChanged = function(event){
@@ -264,22 +272,34 @@ TimerAssistant.prototype.setAlarmSound = function() {
 //UI manipulation functions
 TimerAssistant.prototype.setUIForRunning = function ()
 {
+	var appController = Mojo.Controller.getAppController();
+	if (appModel.AppSettingsCurrent["StayAwake"])
+	{
+		systemModel.PreventDisplaySleep();
+		appController.showBanner("Screen will stay on while running", {source: 'notification'});
+	}
 	Mojo.Additions.DisableWidget("btnStart", true);
 	Mojo.Additions.DisableWidget("btnStop", false);
 	Mojo.Additions.SetWidgetLabel("btnStop", "Stop");
+	document.getElementById('timerViewFace').style.display = "block";
+	document.getElementById('timerViewPicker').style.display = "none";
 	document.getElementById('runningSpinner').style.display = "block";
 }
 
 TimerAssistant.prototype.setUIForStopped = function ()
 {
+	systemModel.AllowDisplaySleep();
 	Mojo.Additions.DisableWidget("btnStart", false);
 	Mojo.Additions.DisableWidget("btnStop", false);
 	Mojo.Additions.SetWidgetLabel("btnStop", "Clear");
+	document.getElementById('timerViewFace').style.display = "none";
+	document.getElementById('timerViewPicker').style.display = "block";
 	document.getElementById('runningSpinner').style.display = "none";
 }
 
 TimerAssistant.prototype.setUIForReset = function ()
 {
+	systemModel.AllowDisplaySleep();
 	timerResetValue = timerDefaultValue;
 	document.getElementById("timerViewFace").innerHTML = timerDefaultValue;
 	Mojo.Additions.DisableWidget("btnStart", true);
@@ -288,8 +308,8 @@ TimerAssistant.prototype.setUIForReset = function ()
 	Mojo.Additions.SetPickerWidgetValue("hour_field", "0");
 	Mojo.Additions.SetPickerWidgetValue("minute_field", "0");
 	Mojo.Additions.SetPickerWidgetValue("second_field", "0");
-	document.getElementById('timerViewFace').style.display = "block";
-	document.getElementById('timerViewPicker').style.display = "none";
+	document.getElementById('timerViewFace').style.display = "none";
+	document.getElementById('timerViewPicker').style.display = "block";
 	document.getElementById('runningSpinner').style.display = "none";
 }
 
@@ -313,10 +333,11 @@ TimerAssistant.prototype.setupToggle = function (toggleName)
 }
 
 TimerAssistant.prototype.deactivate = function(event) {
+	Mojo.Log.info("Timer scene deactivated.");
+	systemModel.AllowDisplaySleep();
+	appModel.SaveSettings();
 	/* remove any event handlers you added in activate and do any other cleanup that should happen before
 	   this scene is popped or another scene is pushed on top */
-	Mojo.Log.error("**** timer scene is dying with settings: " + JSON.stringify(appModel.AppSettingsCurrent));
-
 	Mojo.Event.stopListening(this.controller.get('btnStop'),Mojo.Event.tap, this.btnStopHandler);
 	Mojo.Event.stopListening(this.controller.get('btnStart'),Mojo.Event.tap, this.btnStartHandler);
 	Mojo.Event.stopListening(this.controller.get('timerViewFace'), Mojo.Event.tap, this.timerFaceTapped);
