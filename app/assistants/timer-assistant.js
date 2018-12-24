@@ -447,11 +447,15 @@ Number.prototype.toLongTimeValue = function() {
 	milliseconds = milliseconds - (seconds * 1000);
 	milliseconds = milliseconds.toString().substr(0, 1);
 
-	//Format time segments into exactly 2 digits
+	//Format seconds segments into exactly 2 digits
 	if (seconds > 59)
 		seconds = seconds - (minutes * 60)
 	seconds = seconds.padWithZeroes();
+
+	if (minutes > 59)
+		minutes = minutes - (hours * 60)
 	minutes = minutes.padWithZeroes();
+	
 	hours = hours.padWithZeroes();
 
 	//Return formatted string
