@@ -334,7 +334,6 @@ TimerAssistant.prototype.setupToggle = function (toggleName)
 
 TimerAssistant.prototype.deactivate = function(event) {
 	Mojo.Log.info("Timer scene deactivated.");
-	systemModel.AllowDisplaySleep();
 	appModel.SaveSettings();
 	/* remove any event handlers you added in activate and do any other cleanup that should happen before
 	   this scene is popped or another scene is pushed on top */
@@ -344,6 +343,7 @@ TimerAssistant.prototype.deactivate = function(event) {
 	Mojo.Event.stopListening(this.controller.get('hour_field'), Mojo.Event.propertyChange, this.propertyChanged);
 	Mojo.Event.stopListening(this.controller.get('minute_field'), Mojo.Event.propertyChange, this.propertyChanged);
 	Mojo.Event.stopListening(this.controller.get('second_field'), Mojo.Event.propertyChange, this.propertyChanged);
+	systemModel.AllowDisplaySleep();
 };
 
 TimerAssistant.prototype.cleanup = function(event) {

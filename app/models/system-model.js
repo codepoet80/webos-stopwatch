@@ -1,6 +1,6 @@
 /*
 System Model
- Version 0.5
+ Version 0.5a
  Created: 2018
  Author: Jonathan Wise
  License: MIT
@@ -107,30 +107,48 @@ SystemModel.prototype.PlaySound = function(soundName)
 	return success;
 }
 
-//Allow the display to sleep
+//Prevent the display from sleeping
 SystemModel.prototype.AllowDisplaySleep = function ()
 {
-	var stageController = Mojo.Controller.getAppController().getActiveStageController();
-	
-	//Tell the System it doesn't have to stay awake any more
-	Mojo.Log.info("allowing display sleep");
+	try
+	{
+		var stageController = Mojo.Controller.getAppController().getActiveStageController();
+		if (!stageController)
+			stageController = Mojo.Controller.getAppController().getStageController("");
+		
+		//Ask the System to stay awake while timer is running
+		Mojo.Log.info("allowing display sleep");
 
-	stageController.setWindowProperties({
-		blockScreenTimeout: false
-	});
+		stageController.setWindowProperties({
+			blockScreenTimeout: false
+		});
+	}
+	catch(e)
+	{
+		Mojo.Log.warn("Could not change display sleep settings");
+	}
 }
 
 //Prevent the display from sleeping
 SystemModel.prototype.PreventDisplaySleep = function ()
 {
-	var stageController = Mojo.Controller.getAppController().getActiveStageController();
-	
-	//Ask the System to stay awake while timer is running
-	Mojo.Log.info("preventing display sleep");
+	try
+	{
+		var stageController = Mojo.Controller.getAppController().getActiveStageController();
+		if (!stageController)
+			stageController = Mojo.Controller.getAppController().getStageController("");
+		
+		//Ask the System to stay awake while timer is running
+		Mojo.Log.info("preventing display sleep");
 
-	stageController.setWindowProperties({
-		blockScreenTimeout: true
-	});
+		stageController.setWindowProperties({
+			blockScreenTimeout: true
+		});
+	}
+	catch(e)
+	{
+		Mojo.Log.warn("Could not change display sleep settings");
+	}
 }
 
 //Show a notification window in its own small stage

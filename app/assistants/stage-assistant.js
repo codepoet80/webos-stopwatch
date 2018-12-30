@@ -40,6 +40,31 @@ StageAssistant.prototype.launchWithAlarm = function(AlarmName)
 		useSound = "/media/internal/ringtones/" + appModel.AppSettingsCurrent["AlarmName"] + ".mp3";
 	Mojo.Log.warn("using sound file " + useSound);
 	systemModel.ShowNotificationStage("alarm", "timer/alarm-scene", 150, useSound, vibeTimes);
+
+	Mojo.Log.error("checking bluetooth");
+	//Notify MyWatch if Bluetooth is on
+	this.radioState = new Mojo.Service.Request("palm://com.palm.bluetooth/gap", {
+		method: "gettrusteddevices",
+		parameters: { },
+		onSuccess: function(response) {
+			Mojo.Log.error("checking bluetooth response: " + JSON.stringify(response));
+			if(response) {
+				if(JSON.stringify(response).indexOf("Pebble") != -1) {
+					Mojo.Log.error("sending bluetooth message:");
+					var request = new Mojo.Service.Request('palm://com.palm.applicationManager', {
+						method: 'launch',
+						parameters: {
+							id: "de.metaviewsoft.mwatch",
+							params: {command: "INFO", info: "Timer finished!", appid: "com.jonandnic.webos.stopwatch"}
+							},
+						onSuccess: function() {},
+						onFailure: function() {}
+						});
+				}
+			}
+		}.bind(this),
+		onFailure: function(response) { Mojo.Log.error("error: " + JSON.stringify(response))}
+	});
 }
 
 //Since the app menu and buttons are common to both scenes, we'll handle them in the stage

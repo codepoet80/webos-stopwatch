@@ -15,3 +15,5 @@ https://forums.webosnation.com/webos-development/332259-fumbling-my-way-through-
 - 1.0.0 - Stopwatch now survives the app being killed and re-launched, laps survive scene changes
 - 1.0.1 - Support really long stopwatch times
 - 1.0.2 - Selectable alarm sound in timer!
+- 1.0.3 - Bug fixes for long timer value
+- 1.0.4 - Add support for My Watch to notify a Pebble when a timer finishes.

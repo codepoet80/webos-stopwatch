@@ -1,6 +1,6 @@
 /*
 Mojo Additions
- Version 0.3d
+ Version 0.3e
  Created: 2018
  Author: Jonathan Wise
  License: MIT
@@ -13,74 +13,89 @@ this.Additions = function () {
 
 Additions.ShowDialogBox = function(title, message){
     var stageController = Mojo.Controller.getAppController().getActiveStageController();
-    this.controller = stageController.activeScene();
-    
-    this.controller.showAlertDialog({
-    onChoose: function(value) {},
-        title:title,
-        message:message,
-            choices:[ {label:'OK', value:'OK'} ],
-        allowHTMLMessage:true
-    });
+    if (stageController)
+    {
+        this.controller = stageController.activeScene();
+        
+        this.controller.showAlertDialog({
+        onChoose: function(value) {},
+            title:title,
+            message:message,
+                choices:[ {label:'OK', value:'OK'} ],
+            allowHTMLMessage:true
+        });
+    }
 }
 
 Additions.DisableWidget = function(widgetName, disabledValue)
 {
     var stageController = Mojo.Controller.getAppController().getActiveStageController();
-    this.controller = stageController.activeScene();
+    if (stageController)
+    {
+        this.controller = stageController.activeScene();
 
-    var thisWidgetSetup = this.controller.getWidgetSetup(widgetName);
-    var thisWidgetModel = thisWidgetSetup.model;
-    thisWidgetModel.disabled = disabledValue;
+        var thisWidgetSetup = this.controller.getWidgetSetup(widgetName);
+        var thisWidgetModel = thisWidgetSetup.model;
+        thisWidgetModel.disabled = disabledValue;
 
-    this.controller.setWidgetModel(widgetName, thisWidgetModel);
-    this.controller.modelChanged(thisWidgetModel);
+        this.controller.setWidgetModel(widgetName, thisWidgetModel);
+        this.controller.modelChanged(thisWidgetModel);
+    }
 }
 
 Additions.SetPickerWidgetValue = function(widgetName, newvalue)
 {
     var stageController = Mojo.Controller.getAppController().getActiveStageController();
-    this.controller = stageController.activeScene();
+    if (stageController)
+    {
+        this.controller = stageController.activeScene();
 
-	var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
-	thisWidgetModel.value = newvalue;
-	this.controller.setWidgetModel(widgetName, thisWidgetModel);
+        var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
+        thisWidgetModel.value = newvalue;
+        this.controller.setWidgetModel(widgetName, thisWidgetModel);
+    }
 }
 
 Additions.SetWidgetLabel = function(widgetName, newvalue)
 {
     var stageController = Mojo.Controller.getAppController().getActiveStageController();
-    this.controller = stageController.activeScene();
+    if (stageController)
+    {
+        this.controller = stageController.activeScene();
 
-	var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
-	thisWidgetModel.label = newvalue;
-	this.controller.setWidgetModel(widgetName, thisWidgetModel);
+        var thisWidgetModel = this.controller.getWidgetSetup(widgetName).model;
+        thisWidgetModel.label = newvalue;
+        this.controller.setWidgetModel(widgetName, thisWidgetModel);
+    }
 }
 
 Additions.SetToggleState = function(widgetName, toggledValue)
 {
     var stageController = Mojo.Controller.getAppController().getStageController("");
-    this.controller = stageController.activeScene();
+    if (stageController)
+    {
+        this.controller = stageController.activeScene();
 
-    var thisWidgetSetup = this.controller.getWidgetSetup(widgetName);
-    var thisWidgetModel = thisWidgetSetup.model;
-    thisWidgetModel.value = toggledValue;
-    this.controller.setWidgetModel(widgetName, thisWidgetModel);
+        var thisWidgetSetup = this.controller.getWidgetSetup(widgetName);
+        var thisWidgetModel = thisWidgetSetup.model;
+        thisWidgetModel.value = toggledValue;
+        this.controller.setWidgetModel(widgetName, thisWidgetModel);
 
-    //There appears to be a bug in Mojo that means a toggle button doesn't reflect its model state during instantiation
-    //	This work-around fixes it.
-    var children = document.getElementById(widgetName).querySelectorAll('*');
-    for (var i=0; i<children.length; i++) {
-        if (children[i].className.indexOf("toggle-button") != -1)
-        {
-            children[i].className = "toggle-button " + thisWidgetModel.value;
-        }
-        if (children[i].tagName == "SPAN")
-        {
-            if (thisWidgetModel.value.toString().toLowerCase() == "true")
-                children[i].innerHTML = "on";
-            else
-                children[i].innerHTML = "off";
+        //There appears to be a bug in Mojo that means a toggle button doesn't reflect its model state during instantiation
+        //	This work-around fixes it.
+        var children = document.getElementById(widgetName).querySelectorAll('*');
+        for (var i=0; i<children.length; i++) {
+            if (children[i].className.indexOf("toggle-button") != -1)
+            {
+                children[i].className = "toggle-button " + thisWidgetModel.value;
+            }
+            if (children[i].tagName == "SPAN")
+            {
+                if (thisWidgetModel.value.toString().toLowerCase() == "true")
+                    children[i].innerHTML = "on";
+                else
+                    children[i].innerHTML = "off";
+            }
         }
     }
 }
