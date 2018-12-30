@@ -1,7 +1,7 @@
 # webos-stopwatch
 A simple stopwatch for Palm/HP webOS
 
-Includes modes for counting up, with lap support, and counting down from a set time, with an alarm at the end.
+Includes modes for counting up, with lap support, and counting down from a set time, with a customizable alarm at the end.
 
 Chronicling my trial-and-error through simple webOS development here:
 https://forums.webosnation.com/webos-development/332259-fumbling-my-way-through-webos-development-scratch-2018-a.html
