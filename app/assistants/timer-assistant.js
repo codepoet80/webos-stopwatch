@@ -171,25 +171,42 @@ TimerAssistant.prototype.activate = function(event) {
 //UI event handlers
 TimerAssistant.prototype.btnStartHandler = function() {
     Mojo.Log.info("## timer - Start button pressed!");
-    timerResetValue = document.getElementById("timerViewFace").innerHTML;
-    //Figure out what the timer should go to
-    var Hours = Number((this.controller.get("hour_field").innerText).trim()).padWithZeroes();
-    var Mins = Number((this.controller.get("minute_field").innerText).trim()).padWithZeroes();
-    var Seconds = Number((this.controller.get("second_field").innerText).trim()) + 1;
-    var SystemSeconds = Seconds - 1;
-
-    //Start the local and system timers
-    this.startLocalTimer(Hours, Mins, Seconds.padWithZeroes());
-    systemModel.SetSystemAlarmRelative("JonsTimer", Hours + ":" + Mins + ":" + SystemSeconds.padWithZeroes() + ".00");
-
-    //Do UI updates and feedback
-    this.setUIForRunning();
-    systemModel.PlaySound("down2");
+    switch(Mojo.Additions.GetWidgetLabel("btnStart")) {
+        case "Pause":
+            this.pauseLocalTimer();
+            //Do UI updates and feedback
+            this.setUIForPaused();
+            systemModel.PlaySound("down2");
+            break;
+        case "Resume":
+            //TODO: Need to recalculate end time
+            this.resumeLocalTimer();
+            //Do UI updates and feedback
+            this.setUIForRunning();
+            systemModel.PlaySound("down2");
+            break;
+        default:    //Start
+            timerResetValue = document.getElementById("timerViewFace").innerHTML;
+            //Figure out what the timer should go to
+            var Hours = Number((this.controller.get("hour_field").innerText).trim()).padWithZeroes();
+            var Mins = Number((this.controller.get("minute_field").innerText).trim()).padWithZeroes();
+            var Seconds = Number((this.controller.get("second_field").innerText).trim()) + 1;
+            var SystemSeconds = Seconds - 1;
+    
+            //Start the local and system timers
+            this.startLocalTimer(Hours, Mins, Seconds.padWithZeroes());
+            systemModel.SetSystemAlarmRelative("JonsTimer", Hours + ":" + Mins + ":" + SystemSeconds.padWithZeroes() + ".00");
+    
+            //Do UI updates and feedback
+            this.setUIForRunning();
+            systemModel.PlaySound("down2");
+            break;
+    }
 }
 
 TimerAssistant.prototype.btnStopHandler = function() {
     Mojo.Log.info("## timer - stop button pressed!");
-    if (appModel.AppSettingsCurrent["TimerRunning"] == true) {
+    if (Mojo.Additions.GetWidgetLabel("btnStop") == "Stop") {
         //Cancel timers
         appModel.AppSettingsCurrent["TimerRunning"] = false;
         appModel.SaveSettings();
@@ -263,12 +280,21 @@ TimerAssistant.prototype.setUIForRunning = function() {
         systemModel.PreventDisplaySleep();
         appController.showBanner("Screen will stay on while running", { source: 'notification' });
     }
-    Mojo.Additions.DisableWidget("btnStart", true);
+    Mojo.Additions.SetWidgetLabel("btnStart", "Pause");
     Mojo.Additions.DisableWidget("btnStop", false);
     Mojo.Additions.SetWidgetLabel("btnStop", "Stop");
     document.getElementById('timerViewFace').style.display = "block";
     document.getElementById('timerViewPicker').style.display = "none";
     document.getElementById('runningSpinner').style.display = "block";
+}
+
+TimerAssistant.prototype.setUIForPaused = function() {
+    systemModel.AllowDisplaySleep();
+    Mojo.Additions.DisableWidget("btnStart", false);
+    Mojo.Additions.SetWidgetLabel("btnStart", "Resume");
+    //Mojo.Additions.DisableWidget("btnStop", false);
+    //Mojo.Additions.SetWidgetLabel("btnStop", "Clear");
+    document.getElementById('runningSpinner').style.display = "none";
 }
 
 TimerAssistant.prototype.setUIForStopped = function() {
@@ -286,6 +312,7 @@ TimerAssistant.prototype.setUIForReset = function() {
     timerResetValue = timerDefaultValue;
     document.getElementById("timerViewFace").innerHTML = timerDefaultValue;
     Mojo.Additions.DisableWidget("btnStart", true);
+    Mojo.Additions.SetWidgetLabel("btnStart", "Start");
     Mojo.Additions.DisableWidget("btnStop", true);
     Mojo.Additions.SetWidgetLabel("btnStop", "Stop");
     Mojo.Additions.SetPickerWidgetValue("hour_field", "0");
@@ -355,6 +382,38 @@ TimerAssistant.prototype.startLocalTimer = function(Hours, Mins, Seconds) {
 
     //Set the local timer value now, then repeatedly
     //this.incrementTimer();
+    timerInterval = setInterval(this.incrementTimer, 1000);
+}
+
+TimerAssistant.prototype.pauseLocalTimer = function() {
+    clearInterval(timerInterval);
+    systemModel.ClearSystemAlarm("JonsTimer");
+
+    //Store time remaining, in case we're killed and restarted and need to re-hydrate
+    Mojo.Log.info("*** End time when paused was: " + appModel.AppSettingsCurrent["TimerEndTime"]);
+    var remainingTime = Date.parse(appModel.AppSettingsCurrent["TimerEndTime"]) - Date.parse(new Date());
+    Mojo.Log.info("*** Time remaining when paused " + remainingTime);
+    appModel.AppSettingsCurrent["TimerPaused"] = remainingTime;
+    appModel.AppSettingsCurrent["TimerRunning"] = false;
+    appModel.SaveSettings();
+}
+
+TimerAssistant.prototype.resumeLocalTimer = function() {
+ 
+    //var remainTimerDuration = appModel.AppSettingsCurrent["TimerPaused"] + Date.parse(new Date());
+    var timerValue = new Date();
+    timerValue.setMilliseconds(timerValue.getMilliseconds() + appModel.AppSettingsCurrent["TimerPaused"]);
+    Mojo.Log.info("*** Resuming timer, end time now: " + timerValue);
+    appModel.AppSettingsCurrent["TimerEndTime"] = timerValue;
+    appModel.SaveSettings();
+
+    var seconds = Math.floor(appModel.AppSettingsCurrent["TimerPaused"] / 1000);
+    var minutes = Math.floor(appModel.AppSettingsCurrent["TimerPaused"] / 60000);
+    var hours = Math.floor(minutes / 60);
+    var SystemSeconds = seconds - 1;
+    systemModel.SetSystemAlarmRelative("JonsTimer", hours + ":" + minutes + ":" + SystemSeconds.padWithZeroes() + ".00");
+
+    this.incrementTimer();
     timerInterval = setInterval(this.incrementTimer, 1000);
 }
 

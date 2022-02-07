@@ -24,6 +24,7 @@ var AppModel = function()
 		LapTimerValue: 0,
 		LapTimes: [],
 		TimerRunning: false,
+		TimerPaused: "null",
 		TimerEndTime: "null",
 		VibeEnabled: false,
 		SoundEnabled: true,

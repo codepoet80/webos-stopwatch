@@ -277,7 +277,8 @@ StopwatchAssistant.prototype.setUIForRunning = function()
 	}
 	//Update Widgets
 	Mojo.Additions.SetWidgetLabel("btnLapReset", "Lap");
-	Mojo.Additions.DisableWidget("btnStart", true);
+	Mojo.Additions.SetWidgetLabel("btnStart", "Pause");
+	//Mojo.Additions.DisableWidget("btnStart", true);
 	Mojo.Additions.DisableWidget("btnLapReset", false);
 	Mojo.Additions.DisableWidget("btnStop", false);
 	//Re-draw laps
@@ -291,9 +292,10 @@ StopwatchAssistant.prototype.setUIForStopped = function()
 {
 	systemModel.AllowDisplaySleep();
 	//Update UI
-	Mojo.Additions.SetWidgetLabel("btnLapReset", "Reset");
 	Mojo.Additions.DisableWidget("btnStart", false);
+	Mojo.Additions.SetWidgetLabel("btnStart", "Start");
 	Mojo.Additions.DisableWidget("btnLapReset", false);
+	Mojo.Additions.SetWidgetLabel("btnLapReset", "Reset");
 	Mojo.Additions.DisableWidget("btnStop", true);
 }
 

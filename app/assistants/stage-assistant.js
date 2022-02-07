@@ -30,11 +30,7 @@ StageAssistant.prototype.launchWithAlarm = function(AlarmName) {
     vibeTimes = false;
     if (appModel.AppSettingsCurrent["VibeEnabled"] == true)
         vibeTimes = 5;
-    var useSound = false;
-    if (appModel.AppSettingsCurrent["SoundEnabled"])
-        useSound = "/media/internal/ringtones/" + appModel.AppSettingsCurrent["AlarmName"] + ".mp3";
-    Mojo.Log.warn("using sound file " + useSound);
-    systemModel.ShowNotificationStage("alarm", "timer/alarm-scene", 150, useSound, vibeTimes);
+    systemModel.ShowNotificationStage("alarm", "timer/alarm-scene", 500, false, vibeTimes);
 
     Mojo.Log.info("checking bluetooth");
     //Notify MyWatch if Bluetooth is on

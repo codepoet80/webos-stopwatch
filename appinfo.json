@@ -1,7 +1,7 @@
 {
-	"id": "com.jonandnic.webos.stopwatch",
-	"version": "1.0.4",
-	"vendor": "Jonathan Wise",
+	"id": "com.palm.jonandnic.stopwatch",
+	"version": "1.1.0",
+	"vendor": "Jon Wise",
 	"type": "web",
 	"main": "index.html",
 	"title": "Stopwatch",

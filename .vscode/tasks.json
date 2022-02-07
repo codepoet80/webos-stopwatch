@@ -6,15 +6,13 @@
         {
             "label": "palm-run",
             "type": "shell",
-            "command": "palm-run",
-            "args": ["${workspaceFolder}"],
+            "command": "./.vscode/run.sh",
             "windows": {
-                "command": "palm-run",
-                "args": ["${workspaceFolder}"]
+                "command": ".\\.vscode\\run.bat"
             },
             "problemMatcher": [],
             "group": {
-                "kind": "test",
+                "kind": "build",
                 "isDefault": true
             },
             "presentation": {
@@ -23,13 +21,11 @@
             }
         },
         {
-            "label": "palm-build",
+            "label": "palm-package",
             "type": "shell",
-            "command": "palm-package",
-            "args": ["${workspaceFolder}", "-o", "${workspaceFolder}/_bin"],
+            "command": "./.vscode/build.sh",
             "windows": {
-                "command": "palm-package",
-                "args": ["${workspaceFolder}", "-o", "${workspaceFolder}/_bin"],
+                "command": ".\\.vscode\\build.bat"
             },
             "problemMatcher": [],
             "group": "build",
