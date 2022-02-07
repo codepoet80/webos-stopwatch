@@ -236,7 +236,7 @@ SystemModel.prototype.Vibrate = function(vibrate) {
     } else
         vibeMax = Number(vibrate);
     if (vibeMax > 0)
-        vibeInterval = window.setInterval(doVibrate, 1500);
+        vibeInterval = window.setInterval(doVibrate, 1000);
 
     return success;
 }
