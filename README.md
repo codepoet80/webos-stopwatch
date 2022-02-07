@@ -17,6 +17,7 @@ https://forums.webosnation.com/webos-development/332259-fumbling-my-way-through-
 - 1.0.2 - Selectable alarm sound in timer!
 - 1.0.3 - Bug fixes for long timer value
 - 1.0.4 - Add support for My Watch to notify a Pebble when a timer finishes.
+- 1.1.0 - Release to AppMuseum, future release notes can be found there
 
 ## What is This?
 
