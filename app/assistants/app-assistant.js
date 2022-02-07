@@ -3,9 +3,11 @@ In the app assistant, we setup some app-wide global objects and handle different
 */
 var systemModel = null;
 var appModel = null;
+var updaterModel = null
 function AppAssistant() {
 	appModel = new AppModel();
 	systemModel = new SystemModel();
+	updaterModel = new UpdaterModel();
 	Mojo.Additions = Additions;
 	showAlarm = this.showAlarm;
 }

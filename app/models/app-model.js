@@ -12,6 +12,7 @@ var AppModel = function()
     //Define your app-wide static settings here
     this.AlarmLaunch = false;
     this.DefaultScene = "stopwatch";    //This is used when defaults are re-loaded
+	this.UpdateCheckDone = false;
     
     this.AppSettingsCurrent = null;
     //Define cookie defaults here and they will be loaded and enforced below

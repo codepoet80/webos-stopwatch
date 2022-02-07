@@ -57,7 +57,8 @@ StopwatchAssistant.prototype.setup = function() {
 		]
 	};
 	this.controller.setupWidget(Mojo.Menu.commandMenu, this.cmdMenuAttributes, this.cmdMenuModel);
-	Mojo.Log.info("## stopwatch - scene setup done."); 
+	Mojo.Log.info("## stopwatch - scene setup done.");
+	this.checkForUpdates();
 };
 
 StopwatchAssistant.prototype.activate = function(event) {
@@ -117,8 +118,36 @@ StopwatchAssistant.prototype.activate = function(event) {
 	Mojo.Event.listen(this.controller.get('btnStop'), Mojo.Event.tap, this.btnStopHandler);
 	Mojo.Event.listen(this.controller.get('btnLapReset'), Mojo.Event.tap, this.btnLapResetHandler);
 	Mojo.Event.listen(this.controller.get('btnStart'), Mojo.Event.tap, this.btnStartHandler);
-
 };
+
+StopwatchAssistant.prototype.checkForUpdates = function() {
+    if (!appModel.UpdateCheckDone) {
+        //First check for old version
+        var oldFound = false;
+        systemModel.GetInstalledApps(function(response) {
+            if (response && response.apps) {
+                for (var a = 0; a < response.apps.length; a++) {
+                    if (response.apps[a].id == "com.jonandnic.webos.stopwatch") {
+                        oldFound = true;
+                    }
+                }
+            }
+            if (oldFound) {
+                Mojo.Additions.ShowDialogBox("Deprecated App Found", "It looks like you have both the old and the new Stopwatch apps installed. It is recommended that you delete the old Preware version of Stopwatch as it can no longer be updated");
+            } else {
+                appModel.UpdateCheckDone = true;
+                updaterModel.CheckForUpdate("webOS Stopwatch", function(responseObj) {
+                    if (responseObj && responseObj.updateFound) {
+                        updaterModel.PromptUserForUpdate(function(response) {
+                            if (response)
+                                updaterModel.InstallUpdate();
+                        }.bind(this));
+                    }
+                }.bind(this));
+            }
+        }.bind(this))
+    }
+}
 
 //UI event handlers
 StopwatchAssistant.prototype.btnStartHandler = function()
