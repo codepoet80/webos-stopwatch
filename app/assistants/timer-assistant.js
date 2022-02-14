@@ -223,7 +223,7 @@ TimerAssistant.prototype.btnStopHandler = function() {
 
 TimerAssistant.prototype.timerFaceTapped = function(event) {
     Mojo.Log.info("## timer - the watch face was tapped");
-    if (!appModel.AppSettingsCurrent["TimerRunning"]) {
+    if (!appModel.AppSettingsCurrent["TimerRunning"] && Mojo.Additions.GetWidgetLabel("btnStart") != "Resume") {
         document.getElementById('timerViewFace').style.display = "none";
         document.getElementById('timerViewPicker').style.display = "block";
         Mojo.Log.info("## timer - visibility was toggled");
@@ -292,8 +292,6 @@ TimerAssistant.prototype.setUIForPaused = function() {
     systemModel.AllowDisplaySleep();
     Mojo.Additions.DisableWidget("btnStart", false);
     Mojo.Additions.SetWidgetLabel("btnStart", "Resume");
-    //Mojo.Additions.DisableWidget("btnStop", false);
-    //Mojo.Additions.SetWidgetLabel("btnStop", "Clear");
     document.getElementById('runningSpinner').style.display = "none";
 }
 
@@ -302,6 +300,7 @@ TimerAssistant.prototype.setUIForStopped = function() {
     Mojo.Additions.DisableWidget("btnStart", false);
     Mojo.Additions.DisableWidget("btnStop", false);
     Mojo.Additions.SetWidgetLabel("btnStop", "Clear");
+    Mojo.Additions.SetWidgetLabel("btnStart", "Start");
     document.getElementById('timerViewFace').style.display = "none";
     document.getElementById('timerViewPicker').style.display = "block";
     document.getElementById('runningSpinner').style.display = "none";

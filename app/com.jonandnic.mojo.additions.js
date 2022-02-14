@@ -12,11 +12,7 @@ Mojo Additions
 
 this.Additions = function() {}
 
-try {
-    Mojo.Log.info("#### Mojo Additions added");
-} catch (e) {
-    console.log("#### Mojo Additions added");
-}
+Mojo.Log.info("#### Mojo Additions added");
 
 Additions.ShowDialogBox = function(title, message) {
     var stageController = Mojo.Controller.getAppController().getActiveStageController();

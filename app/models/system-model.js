@@ -216,14 +216,6 @@ SystemModel.prototype.PlayAlertSound = function(sound) {
     }
 }
 
-SystemModel.prototype.StopAlertSound = function() {
-    var audioPlayer = document.getElementById("audioPlayer");
-    if (audioPlayer) {
-        Mojo.Log.info("Stopping notification sound");
-        audioPlayer.pause();
-    }
-}
-
 //Vibrate the device
 SystemModel.prototype.Vibrate = function(vibrate) {
     var success = true;
@@ -236,7 +228,7 @@ SystemModel.prototype.Vibrate = function(vibrate) {
     } else
         vibeMax = Number(vibrate);
     if (vibeMax > 0)
-        vibeInterval = window.setInterval(doVibrate, 1000);
+        vibeInterval = window.setInterval(doVibrate, 500);
 
     return success;
 }
@@ -417,16 +409,9 @@ var vibeCount = 0;
 var vibeMax = 5;
 doVibrate = function() {
     vibeCount++;
-    Mojo.Log.error("vibrating!");
     new Mojo.Service.Request("palm://com.palm.vibrate", {
         method: "vibrate",
-        parameters: { "period": 500, "duration": 1000 },
-        onSuccess: function(response) {
-            Mojo.Log.error("Vibrate Success", JSON.stringify(response));
-        },
-        onFailure: function(response) {
-            Mojo.Log.error("Vibrate Failure: ", JSON.stringify(response));
-        }
+        parameters: { "period": 500, "duration": 1000 }
     });
 
     if (vibeCount >= vibeMax) {
