@@ -67,7 +67,7 @@ StageAssistant.prototype.handleCommand = function(event) {
         switch (event.command) {
             case 'do-myAbout':
                 {
-                    Mojo.Additions.ShowDialogBox("Stopwatch", "Copyright 2018, Jonathan Wise. Available under an MIT License. Source code available at: https://github.com/codepoet80/webos-stopwatch");
+                    Mojo.Additions.ShowDialogBox("Stopwatch", "Copyright 2018, Jon W. Available under an MIT License. Source code available at: https://github.com/codepoet80/webos-stopwatch");
                     break;
                 }
             case 'do-stayAwake':
